@@ -20,6 +20,7 @@ n + 3
 jsy.student.Lab1.plus(3, 4)
 
 // We can imports all of the functions from jsy.student.Lab1
+import jsy.lab1.SearchTree
 import jsy.student.Lab1._
 plus(3, 4)
 
@@ -62,3 +63,13 @@ assert {
 // For convenience, we also have an eval function that takes a string,
 // which calls the parser and then delegates to your eval function.
 //eval("1 + 1")
+import jsy.lab1.{SearchTree, Node, Empty}
+
+val t1 = Node(Empty, 5, Empty)
+
+def thing(t: SearchTree) = {
+  val (l, d, r) = (t:Node)
+  println(d)
+}
+
+thing(t1)
