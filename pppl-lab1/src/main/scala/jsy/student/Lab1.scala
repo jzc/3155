@@ -57,28 +57,45 @@ object Lab1 extends jsy.util.JsyApplication with jsy.lab1.Lab1Like {
 
   def abs(n: Double): Double = if (n >= 0) n else -n
 
-  def xor(a: Boolean, b: Boolean): Boolean = a ^ b
+  def xor(a: Boolean, b: Boolean): Boolean = {
+    if (a) {
+      if (b) false else true
+    } else {
+      if (b) true else false
+    }
+  }
 
   def repeat(s: String, n: Int): String = {
     require(n >= 0)
-    if (n > 0) s + repeat(s, n-1) else ""
+    if (n > 0)
+      s + repeat(s, n-1)
+    else ""
   }
 
   def sqrtStep(c: Double, xn: Double): Double = xn - (xn*xn - c)/(2*xn)
 
   def sqrtN(c: Double, x0: Double, n: Int): Double = {
     require(n >= 0)
-    if (n == 0) x0 else sqrtStep(c, sqrtN(c, x0, n-1))
+    if (n == 0)
+      x0
+    else
+      sqrtStep(c, sqrtN(c, x0, n-1))
   }
 
   def sqrtErr(c: Double, x0: Double, epsilon: Double): Double = {
     require(epsilon > 0)
-    if (abs(x0*x0-c) < epsilon) x0 else sqrtErr(c, sqrtStep(c, x0), epsilon)
+    if (abs(x0*x0-c) < epsilon)
+      x0
+    else
+      sqrtErr(c, sqrtStep(c, x0), epsilon)
   }
 
   def sqrt(c: Double): Double = {
     require(c >= 0)
-    if (c == 0) 0 else sqrtErr(c, 1.0, 0.0001)
+    if (c == 0)
+      0
+    else
+      sqrtErr(c, 1.0, 0.0001)
   }
 
   /* Search Tree */
@@ -100,7 +117,11 @@ object Lab1 extends jsy.util.JsyApplication with jsy.lab1.Lab1Like {
   def insert(t: SearchTree, n: Int): SearchTree = {
     t match {
       case Empty => Node(Empty, n, Empty)
-      case Node(l, d, r) => if (n < d) Node(insert(l,n), d, r) else Node(l, d, insert(r,n))
+      case Node(l, d, r) =>
+        if (n < d)
+          Node(insert(l,n), d, r)
+        else
+          Node(l, d, insert(r,n))
     }
   }
 
