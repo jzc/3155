@@ -222,6 +222,10 @@ class Lab1Spec(lab1: Lab1Like) extends FlatSpec {
 
   // Eval
 
+  "more eval" should "evaluate subexpressions" in {
+    assert(eval("(6 / 2) + (3 * 4) - 1") === 14)
+  }
+
   "eval+" should "perform addition" in {
     assert(eval("1 + 1") === 2)
   }
@@ -241,6 +245,10 @@ class Lab1Spec(lab1: Lab1Like) extends FlatSpec {
   "eval/0" should "division by 0 should yield Infinity" in {
     assert(eval("4 / 0") === Double.PositiveInfinity)
     assert(eval("-4 / 0") === Double.NegativeInfinity)
+  }
+
+  "jsy" should "do stuff" in {
+    assert(eval("1 + (2 - 3) * 4 / (-5)") === 1.8)
   }
 
   it should "0/0 should yield NaN" in {

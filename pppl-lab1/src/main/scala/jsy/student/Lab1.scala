@@ -109,7 +109,7 @@ object Lab1 extends jsy.util.JsyApplication with jsy.lab1.Lab1Like {
   def repOk(t: SearchTree): Boolean = {
     def check(t: SearchTree, min: Int, max: Int): Boolean = t match {
       case Empty => true
-      case Node(l, d, r) => (min until max contains d) && check(l, min, d) && check(r, d, max)
+      case Node(l, d, r) => (min to max contains d) && check(l, min, d) && check(r, d, max)
     }
     check(t, Int.MinValue, Int.MaxValue)
   }
@@ -135,25 +135,19 @@ object Lab1 extends jsy.util.JsyApplication with jsy.lab1.Lab1Like {
     }
   }
 
-  def delete(t: SearchTree, n: Int): SearchTree = {
-    t match {
-      case Node(l, d, r) => n match {
-        case `d` => t match {
-          case Node(Empty, _, Empty) => Empty
-          case Node(Empty, _, r) => r
-          case Node(l, _, Empty) => l
-          case Node(l, _, r) => {
-            val (r1, m) = deleteMin(r)
-            Node(l, m, r1)
-          }
-        }
-        case lt if lt < d =>
-          Node(delete(l, n), d, r)
-        case _ =>
-          Node(l, d, delete(r, n))
-      }
+  def delete(t: SearchTree, n: Int): SearchTree = t match {
       case Empty => Empty
-    }
+      case Node(l, d, r) if n < d  => Node(delete(l, n), d, r)
+      case Node(l, d, r) if n > d  => Node(l, d, delete(r, n))
+      case _ => (t: @unchecked) match {
+        case Node(Empty, _, Empty) => Empty
+        case Node(Empty, _, r) => r
+        case Node(l, _, Empty) => l
+        case Node(l, _, r) => {
+          val (r1, m) = deleteMin(r)
+          Node(l, m, r1)
+        }
+      }
   }
 
   /* JavaScripty */
