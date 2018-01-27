@@ -8,12 +8,32 @@
 
     \section{Scala Basics: Binding and Scope}
     \begin{itemize}
-        \item [a.]
-        \item [b.] 
+        \item [a.] The use of \texttt{pi} on line 4 is bound at line 3.
+        The scope in which that use of \texttt{pi} has a definition within that scope, so 
+        that binding is used. The use of \texttt{pi} on line 7 is bound at line 1. The 
+        \texttt{area} function does not create a new scope, and the scope in which \texttt{area}
+        is defined has a definition of \texttt{pi} on line 1, so that one is used.
+        \item [b.] The use of \texttt{x} on line 3 is bound at line 2. The function parameters of \texttt{f} 
+        are the innermost definition of \texttt{x}, so that binding is used.
+        The use of \texttt{x} on line 6 is bound on line 5. \texttt{x} is not bound in that scope, so we use
+        the binding of \texttt{x} provided by the \texttt{case} statement.
+        The use of \texttt{x} on line 10 is bound on line 5. This is the same as the use on line 6.
+        The use of \texttt{x} on line 13 is bound on line 1. This is the outermost scope, so there are
+        no bindings to shadow and there is a binding provided on line 1, so that one is used.
     \end{itemize}
 
     \section{Scala Basics: Typing}
-    \begin{itemize}
-        \item [a.] hello
-    \end{itemize}
+    The body of \texttt{g} is well-typed, and returns a \texttt{((Int, Int), Int)}. 
+    
+    \texttt{if (x==0) (b, 1) else (b, a+2): ((Int, Int), Int)} because\\
+    \texttt{(b, 1): ((Int, Int), Int)} \\
+    \texttt{(b, a+2): ((Int, Int), Int)} \\
+    \texttt{x: Int}\\
+    \texttt{3: Int}\\
+    \texttt{(x, 3): (Int, Int)} \\
+    \texttt{b: (Int, Int)} \\
+    \texttt{1: Int} \\
+    \texttt{a: Int} \\
+    \texttt{2: Int} \\
+    \texttt{a+2: Int}
 \end{document}
