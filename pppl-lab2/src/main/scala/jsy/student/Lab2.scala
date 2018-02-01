@@ -134,8 +134,18 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
             case (Undefined, Undefined) => B(false)
             case _ => B(true)
           }
-          case Lt => B(toNumber(ee1) < toNumber(ee2))
-          case _ => ???
+          case Lt => B(toNumber(ee1) <  toNumber(ee2))
+          case Le => B(toNumber(ee1) <= toNumber(ee2))
+          case Gt => B(toNumber(ee1) >  toNumber(ee2))
+          case Ge => B(toNumber(ee1) >= toNumber(ee2))
+          case Seq => ee2
+        }
+      }
+      case Unary(uop, e1) => {
+        val ee1 = eval(env, e1)
+        uop match {
+          case Neg => N(-toNumber(ee1))
+          case Not => B(!toBoolean(ee1))
         }
       }
 
