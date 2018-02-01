@@ -8,7 +8,7 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
 
   /*
    * CSCI 3155: Lab 2
-   * <Your Name>
+   * Justin Cai
    * 
    * Partner: <Your Partner's Name>
    * Collaborators: <Any Collaborators>
@@ -62,6 +62,8 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
     require(isValue(v))
     (v: @unchecked) match {
       case N(n) => n
+      case B(b) => if (b) 1 else 0
+      case Undefined => Double.NaN
       case _ => ???
     }
   }
@@ -70,6 +72,7 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
     require(isValue(v))
     (v: @unchecked) match {
       case B(b) => b
+      case N(n) => n != 0
       case _ => ???
     }
   }
@@ -86,10 +89,50 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
   def eval(env: Env, e: Expr): Expr = {
     e match {
       /* Base Cases */
+      case N(n) => N(n)
+      case B(b) => B(b)
+      case S(s) => S(s)
+      case Undefined => Undefined
+      case Binary(And, e1, e2) => {
+        val ee1 = eval(env, e1)
+        if (toBoolean(ee1) == false)
+          ee1
+        else
+          eval(env, e2)
+      }
+      case Binary(Or, e1, e2) => {
+        val ee1 = eval(env, e1)
+        if (toBoolean(ee1) == true)
+          ee1
+        else
+          eval(env, e2)
+      }
+      case Binary(bop, e1, e2) => {
+        val ee1 = eval(env, e1)
+        val ee2 = eval(env, e2)
+        bop match {
+          case Plus  => N(toNumber(ee1) + toNumber(ee2))
+          case Minus => N(toNumber(ee1) - toNumber(ee2))
+          case Times => N(toNumber(ee1) * toNumber(ee2))
+          case Div   => N(toNumber(ee1) / toNumber(ee2))
+          case Eq => (ee1, ee2) match {
+            case (N(n1), N(n2)) => B(n1==n2)
+            case (B(b1), B(b2)) => B(b1==b2)
+            case (S(s1), S(s2)) => B(s1==s2)
+            case _ => B(false)
+          }
+          case Ne => (ee1, ee2) match {
+            case (N(n1), N(n2)) => B(n1!=n2)
+            case (B(b1), B(b2)) => B(b1!=b2)
+            case (S(s1), S(s2)) => B(s1!=s2)
+            case _ => B(true)
+          }
+          case _ => ???
+        }
+      }
 
       /* Inductive Cases */
       case Print(e1) => println(pretty(eval(env, e1))); Undefined
-
       case _ => ???
     }
   }

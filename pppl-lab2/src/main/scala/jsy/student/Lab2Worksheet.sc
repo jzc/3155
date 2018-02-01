@@ -24,3 +24,6 @@ val negFourAST = parse("-4")
 // which calls the parser and then delegates to your eval function.
 //eval("undefined + 1")
 
+val t = B(true)
+val f = B(false)
+eval(Binary(And,t,t))
