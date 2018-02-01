@@ -15,6 +15,25 @@ import org.scalatest._
 class Lab2Spec(lab2: Lab2Like) extends FlatSpec {
   import lab2._
 
+  "ToNumber" should "convert numbers correctly" in {
+    assert(toNumber(N(1)) === 1)
+    assert(toNumber(S("100")) === 100)
+    assert(toNumber(S("bogus")).isNaN)
+
+  }
+
+  "toBoolean" should "convert to boolean correctly" in {
+    assert(toBoolean(N(0)) === false)
+    assert(toBoolean(N(-0)) === false)
+    assert(toBoolean(N(Double.NaN)) === false)
+    assert(toBoolean(Undefined) === false)
+    assert(toBoolean(S("")) === false)
+    assert(toBoolean(S("false")) === true)
+    assert(toBoolean(B(false)) === false)
+    assert(toBoolean(B(true)) === true)
+    assert(toBoolean(N(4)) === true)
+  }
+
   "And" should "return true only if both expressions are true" in {
     val t = B(true)
     val f = B(false)

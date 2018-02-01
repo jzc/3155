@@ -63,8 +63,10 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
     (v: @unchecked) match {
       case N(n) => n
       case B(b) => if (b) 1 else 0
+      case S(s) => try s.toDouble catch {
+        case _ => Double.NaN
+      }
       case Undefined => Double.NaN
-      case _ => ???
     }
   }
 
@@ -72,17 +74,20 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
     require(isValue(v))
     (v: @unchecked) match {
       case B(b) => b
-      case N(n) => n != 0
-      case _ => ???
+      case N(n) => !n.isNaN && n != 0
+      case S("") => false
+      case S(s) => true
+      case Undefined => false
     }
   }
 
   def toStr(v: Expr): String = {
     require(isValue(v))
     (v: @unchecked) match {
+      case N(n) => n.toString
+      case B(b) => b.toString
       case S(s) => s
       case Undefined => "undefined"
-      case _ => ???
     }
   }
 
@@ -119,14 +124,17 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
             case (N(n1), N(n2)) => B(n1==n2)
             case (B(b1), B(b2)) => B(b1==b2)
             case (S(s1), S(s2)) => B(s1==s2)
+            case (Undefined, Undefined) => B(true)
             case _ => B(false)
           }
           case Ne => (ee1, ee2) match {
             case (N(n1), N(n2)) => B(n1!=n2)
             case (B(b1), B(b2)) => B(b1!=b2)
             case (S(s1), S(s2)) => B(s1!=s2)
+            case (Undefined, Undefined) => B(false)
             case _ => B(true)
           }
+          case Lt => B(toNumber(ee1) < toNumber(ee2))
           case _ => ???
         }
       }
