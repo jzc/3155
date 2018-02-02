@@ -84,7 +84,7 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
   def toStr(v: Expr): String = {
     require(isValue(v))
     (v: @unchecked) match {
-      case N(n) => n.toString
+      case N(n) => "%1.0f" format n
       case B(b) => b.toString
       case S(s) => s
       case Undefined => "undefined"
@@ -99,6 +99,8 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
       case S(s) => S(s)
       case Var(x) => lookup(env, x)
       case Undefined => Undefined
+
+        /* And and Or (seperate from other bops because they don't always eval both expressions */
       case Binary(And, e1, e2) => {
         val ee1 = eval(env, e1)
         if (toBoolean(ee1) == false)
@@ -113,11 +115,16 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
         else
           eval(env, e2)
       }
+
+        /* All other bops (evaluate both subexpressions) */
       case Binary(bop, e1, e2) => {
         val ee1 = eval(env, e1)
         val ee2 = eval(env, e2)
         (bop: @unchecked) match {
-          case Plus  => N(toNumber(ee1) + toNumber(ee2))
+          case Plus  => (ee1, ee2) match {
+            case (S(_), _) | (_, S(_)) => S(toStr(ee1) + toStr(ee2))
+            case _ => N(toNumber(ee1) + toNumber(ee2))
+          }
           case Minus => N(toNumber(ee1) - toNumber(ee2))
           case Times => N(toNumber(ee1) * toNumber(ee2))
           case Div   => N(toNumber(ee1) / toNumber(ee2))
@@ -142,6 +149,8 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
           case Seq => ee2
         }
       }
+
+        /* Uops */
       case Unary(uop, e1) => {
         val ee1 = eval(env, e1)
         uop match {
@@ -158,8 +167,9 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
           eval(env, e2)
         else
           eval(env, e3)
-      /* Inductive Cases */
-      case Print(e1) => println(pretty(eval(env, e1))); Undefined
+      case Print(e1) =>
+        println(pretty(eval(env, e1)))
+        Undefined
     }
   }
 

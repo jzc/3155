@@ -73,6 +73,12 @@ class Lab2Spec(lab2: Lab2Like) extends FlatSpec {
     assert(e3 === N(3))
   }
 
+  it should "return the concatenation of two string with at least one string" in {
+    assert(eval(Binary(Plus, N(5), S("foo"))) === S("5foo"))
+    assert(eval(Binary(Plus, S("foo"), B(false))) === S("foofalse"))
+    assert(eval(Binary(Plus, S("foo"), S("bar"))) === S("foobar"))
+  }
+
   "Minus" should "subtract two number values and return a number" in {
     val e1 = N(3)
     val e2 = N(1)
@@ -92,12 +98,15 @@ class Lab2Spec(lab2: Lab2Like) extends FlatSpec {
     val e2 = N(5)
     val e3 = eval(Binary(Div, e1, e2))
     assert(e3 === N(1.6))
+    assert(eval(Binary(Div, N(10), N(0))) === N(Double.PositiveInfinity))
+    assert(eval(Binary(Div, N(-10), N(0))) === N(Double.NegativeInfinity))
   }
 
   "Arithmetic Operators" should "produce non-intuitive solutions given differing expression types" in {
     val e1 = B(true)
     val e2 = N(7)
     assert(eval(Binary(Plus,e1,e2)) == N(8))
+    assert(eval(Binary(Minus,S("10"),N(5))) === N(5))
   }
 
   "Eq" should "return true if two numerical values are the same" in {
