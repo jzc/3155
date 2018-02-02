@@ -64,7 +64,7 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
       case N(n) => n
       case B(b) => if (b) 1 else 0
       case S(s) => try s.toDouble catch {
-        case _ => Double.NaN
+        case _: Throwable => Double.NaN
       }
       case Undefined => Double.NaN
     }
@@ -97,6 +97,7 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
       case N(n) => N(n)
       case B(b) => B(b)
       case S(s) => S(s)
+      case Var(x) => lookup(env, x)
       case Undefined => Undefined
       case Binary(And, e1, e2) => {
         val ee1 = eval(env, e1)
@@ -115,7 +116,7 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
       case Binary(bop, e1, e2) => {
         val ee1 = eval(env, e1)
         val ee2 = eval(env, e2)
-        bop match {
+        (bop: @unchecked) match {
           case Plus  => N(toNumber(ee1) + toNumber(ee2))
           case Minus => N(toNumber(ee1) - toNumber(ee2))
           case Times => N(toNumber(ee1) * toNumber(ee2))
@@ -148,10 +149,17 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
           case Not => B(!toBoolean(ee1))
         }
       }
-
+      case ConstDecl(x, e1, e2) => {
+        val newEnv = extend(env, x, eval(env, e1))
+        eval(newEnv, e2)
+      }
+      case If(e1, e2, e3) =>
+        if (toBoolean(eval(env, e1)))
+          eval(env, e2)
+        else
+          eval(env, e3)
       /* Inductive Cases */
       case Print(e1) => println(pretty(eval(env, e1))); Undefined
-      case _ => ???
     }
   }
 
