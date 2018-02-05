@@ -77,6 +77,7 @@ class Lab2Spec(lab2: Lab2Like) extends FlatSpec {
     assert(eval(Binary(Plus, N(5), S("foo"))) === S("5foo"))
     assert(eval(Binary(Plus, S("foo"), B(false))) === S("foofalse"))
     assert(eval(Binary(Plus, S("foo"), S("bar"))) === S("foobar"))
+    assert(eval(Binary(Plus, N(5.1), S(""))) === S("5.1"))
   }
 
   "Minus" should "subtract two number values and return a number" in {
@@ -105,6 +106,7 @@ class Lab2Spec(lab2: Lab2Like) extends FlatSpec {
   "Arithmetic Operators" should "produce non-intuitive solutions given differing expression types" in {
     val e1 = B(true)
     val e2 = N(7)
+    val z = 0
     assert(eval(Binary(Plus,e1,e2)) == N(8))
     assert(eval(Binary(Minus,S("10"),N(5))) === N(5))
   }
@@ -156,7 +158,7 @@ class Lab2Spec(lab2: Lab2Like) extends FlatSpec {
     val e2 = N(5)
     val e3 = eval(Binary(Lt, e1, e2))
     assert(e3 === B(false))
-  } 
+  }
 
   "Le" should "return true if the first expression is less than the second" in {
     val e1 = N(5)
@@ -225,14 +227,22 @@ class Lab2Spec(lab2: Lab2Like) extends FlatSpec {
     val e1 = N(5)
     val e2 = Undefined
     assert(eval(Binary(Eq,e1,e2)) === B(false))
-  } 
+  }
+
+  it should "compare strings based on lexiographical order" in {
+    assert(eval(Binary(Gt, S("10"), S("100"))) === B(false))
+    assert(eval(Binary(Ge, S("10"), S("100"))) === B(false))
+    assert(eval(Binary(Ge, S("10"), S("10"))) === B(true))
+    assert(eval(Binary(Lt, S("10"), S("1"))) === B(false))
+    assert(eval(Binary(Le, S("10"), S("1"))) === B(false))
+  }
 
   "ConstDecl" should "extend the environment with the first expression results bound to the identifier, and then eval the second expression" in {
     val e1 = N(3)
     val e2 = Binary(Plus, Var("x"), N(1))
     val e3 = eval(ConstDecl("x", e1, e2)) 
     assert(e3 === N(4))
-  } 
+  }
   
   "If" should "eval the first expression if the conditional is true" in {
     val e1 = Binary(Plus, N(3), N(2))

@@ -84,7 +84,7 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
   def toStr(v: Expr): String = {
     require(isValue(v))
     (v: @unchecked) match {
-      case N(n) => "%1.0f" format n
+      case N(n) => if (n.toInt == n) n.toInt.toString else n.toString
       case B(b) => b.toString
       case S(s) => s
       case Undefined => "undefined"
@@ -142,10 +142,22 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
             case (Undefined, Undefined) => B(false)
             case _ => B(true)
           }
-          case Lt => B(toNumber(ee1) <  toNumber(ee2))
-          case Le => B(toNumber(ee1) <= toNumber(ee2))
-          case Gt => B(toNumber(ee1) >  toNumber(ee2))
-          case Ge => B(toNumber(ee1) >= toNumber(ee2))
+          case Lt => (ee1, ee2) match {
+            case (S(s1), S(s2)) => B(s1 < s2)
+            case _ =>   B(toNumber(ee1) < toNumber(ee2))
+          }
+          case Le => (ee1, ee2) match {
+            case (S(s1), S(s2)) => B(s1 <= s2)
+            case _ =>   B(toNumber(ee1) <= toNumber(ee2))
+          }
+          case Gt => (ee1, ee2) match {
+            case (S(s1), S(s2)) => B(s1 > s2)
+            case _ =>   B(toNumber(ee1) > toNumber(ee2))
+          }
+          case Ge => (ee1, ee2) match {
+            case (S(s1), S(s2)) => B(s1 >= s2)
+            case _ =>   B(toNumber(ee1) >= toNumber(ee2))
+          }
           case Seq => ee2
         }
       }
