@@ -128,20 +128,8 @@ object Lab2 extends jsy.util.JsyApplication with Lab2Like {
           case Minus => N(toNumber(ee1) - toNumber(ee2))
           case Times => N(toNumber(ee1) * toNumber(ee2))
           case Div   => N(toNumber(ee1) / toNumber(ee2))
-          case Eq => (ee1, ee2) match {
-            case (N(n1), N(n2)) => B(n1==n2)
-            case (B(b1), B(b2)) => B(b1==b2)
-            case (S(s1), S(s2)) => B(s1==s2)
-            case (Undefined, Undefined) => B(true)
-            case _ => B(false)
-          }
-          case Ne => (ee1, ee2) match {
-            case (N(n1), N(n2)) => B(n1!=n2)
-            case (B(b1), B(b2)) => B(b1!=b2)
-            case (S(s1), S(s2)) => B(s1!=s2)
-            case (Undefined, Undefined) => B(false)
-            case _ => B(true)
-          }
+          case Eq => B(ee1 == ee2) 
+          case Ne => B(ee1 != ee2) 
           case Lt => (ee1, ee2) match {
             case (S(s1), S(s2)) => B(s1 < s2)
             case _ =>   B(toNumber(ee1) < toNumber(ee2))
