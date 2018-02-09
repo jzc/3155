@@ -1,0 +1,25 @@
+\documentclass{article}
+    \usepackage{geometry}
+    \usepackage{amsmath}
+    
+\begin{document}
+\begin{align*}
+    % exponent must be non zero
+    % fraction must be non zero for exponent
+    floating\,point &::= (non\,zero\,integer) \text{`.'} (fraction) \\
+    % yes 3.0, no 3.0e3 (fraction == 0), no  3.0e
+    fraction &::= (middle\,sequence) | (fraction\,with\,exponent))\\
+    fraction\,with\,exponent &::= (non\,zero\,fraction) \text{`E'} (non\,zero\,integer)\\
+    % unlike non zero int, can have leading zeros, like 1.00001
+    non\,zero\,fraction &::= (middle\,sequence)(non\,zero\,digit)\\
+    % has no leading zeros, no 0001
+    non\,zero\,integer &::=  \text{`-'} (non\,zero\,number) | non\,zero\,number\\
+    non\,zero\,number &::= (non\,zero\,digit)(middle\,sequence)\\
+    % middle sequence is any string of numbers, and can be empty.
+    % goes in the "middle" of a number"
+    middle\,sequence &::= (any\,digit)(middle\,sequence) | \epsilon\\
+    any\,digit &::= \text{`0'} | non\,zero\,digit\\
+    non\,zero\,digit &::= \text{`1'} | \text{`2'} | \text{`3'} | \text{`4'} |
+                          \text{`5'} | \text{`6'} | \text{`7'} | \text{`8'} | \text{`9'}\\
+\end{align*}
+\end{document}

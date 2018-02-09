@@ -25,3 +25,12 @@ val negFourAST = parse("-4")
 //eval("undefined + 1")
 (1.1).toInt == 1
 (1.0).toInt.toString
+
+S("1") == S("1")
+
+eval(Binary(And, Print(N(1)), Print(N(2))))
+
+if ((1 << 3 - 2) == ((1 << 3) - 2))
+  println("Left shift higher")
+else if ((1 << 3 - 2) == (1 << (3 - 2)))
+  println("Minus higher")
