@@ -202,12 +202,20 @@ object Lab3 extends JsyApplication with Lab3Like {
       case Print(e1) => Print(substitute(e1, v, x))
       case Unary(uop, e1) => Unary(uop, substitute(e1, v, x))
       case Binary(bop, e1, e2) => Binary(bop, substitute(e1, v, x), substitute(e2, v, x))
-      case If(e1, e2, e3) => ???
+      case If(e1, e2, e3) => If(substitute(e1, v, x), substitute(e2, v, x), substitute(e3, v, x))
       case Call(e1, e2) => ???
       case Var(y) => if (y==x) v else Var(y)
-      case Function(None, y, e1) => ???
-      case Function(Some  (y1), y2, e1) => ???
-      case ConstDecl(y, e1, e2) => ???
+      case Function(None, y, e1) =>
+        if (y==x)
+          Function(None, y, e1)
+        else
+          Function(None, y, substitute(e1, v, x))
+      case Function(Some (y1), y2, e1) => ???
+      case ConstDecl(y, e1, e2) =>
+        if (y==x)
+          ConstDecl(y, e1, e2)
+        else
+          ConstDecl(y, substitute(e1, v, x), substitute(e2, v, x))
     }
   }
     
