@@ -94,8 +94,11 @@ class Lab3Spec(lab3: Lab3Like) extends FlatSpec {
     val e1p = parse("1 - 1")
     val e2 = parse("3 - 1 - 1")
     val e2p = parse("2 - 1")
+    val e3 = parse("3*2+1")
     val v1 = N(0)
     val v2 = N(1)
+    val str1 = S("hello")
+    val str2 = S("world")
 
     val vidfunction = parse("function (x) { return x }")
 
@@ -123,6 +126,146 @@ class Lab3Spec(lab3: Lab3Like) extends FlatSpec {
       assertResult(N(np)) {
         step(Unary(Neg, v1))
       }
+    }
+
+    "DoNot" should "perform DoNot" in {
+      val bp = !toBoolean(v1)
+      assertResult(B(bp)) {
+        step(Unary(Not, v1))
+      }
+    }
+
+    "DoSeq" should "perform DoSeq" in {
+      assertResult(e2) {
+        step(Binary(Seq, v1, e2))
+      }
+    }
+
+    "DoPlusNumber" should "perform DoPlusNumber" in {
+      val np = toNumber(v1) + toNumber(v2)
+      assertResult(N(np)) {
+        step(Binary(Plus, v1, v2))
+      }
+    }
+
+    "DoPlusString" should "perform DoPlusString" in {
+      {
+        val strp = toStr(str1) + toStr(v2)
+        assertResult(S(strp)) {
+          step(Binary(Plus, str1, v2))
+        }
+      }
+      {
+        val strp = toStr(v1) + toStr(str2)
+        assertResult(S(strp)) {
+          step(Binary(Plus, v1, str2))
+        }
+      }
+    }
+
+    "DoArith" should "perform DoArith" in {
+      List(
+        ((x:Double, y:Double)=> x - y, Minus),
+        ((x:Double, y:Double)=> x * y, Times),
+        ((x:Double, y:Double)=> x / y, Div)
+      ).foreach((t)=>{
+        val (f, bop) = t
+        val np = f(toNumber(v1), toNumber(v2))
+        assertResult(N(np)) {
+          step(Binary(bop, v1, v2))
+        }
+      })
+    }
+
+    "DoInequalityNumber" should "perform DoInequalityNumber" in {
+      List(
+        ((x:Double, y:Double)=> x <  y, Lt),
+        ((x:Double, y:Double)=> x <= y, Le),
+        ((x:Double, y:Double)=> x >  y, Gt),
+        ((x:Double, y:Double)=> x >= y, Ge)
+      ).foreach((t)=>{
+        val (f, bop) = t
+        val bp = f(toNumber(v1), toNumber(v2))
+        assertResult(B(bp)) {
+          step(Binary(bop, v1, v2))
+        }
+      })
+    }
+
+    "DoInequalityString" should "perform DoInequalityString" in {
+      List(
+        ((x:String, y:String)=> x <  y, Lt),
+        ((x:String, y:String)=> x <= y, Le),
+        ((x:String, y:String)=> x >  y, Gt),
+        ((x:String, y:String)=> x >= y, Ge)
+      ).foreach((t)=>{
+        val (f, bop) = t
+        val bp = f(toStr(str1), toStr(str2))
+        assertResult(B(bp)) {
+          step(Binary(bop, str1, str2))
+        }
+      })
+    }
+
+    "DoEquality" should "perform DoEquality" in {
+      List(
+        ((x:Expr, y:Expr)=> x == y, Eq),
+        ((x:Expr, y:Expr)=> x != y, Ne)
+      ).foreach((t) => {
+        val (f, bop) = t
+        val bp = f(v1, v2)
+        assertResult(B(bp)) {
+          step(Binary(bop, v1, v2))
+        }
+      })
+    }
+
+    "DoAndTrue" should "perform DoAndTrue" in {
+      List(N(1), S(" "), B(true)).foreach((v1)=>{
+        assertResult(e2) {
+          step(Binary(And, v1, e2))
+        }
+      })
+    }
+
+    "DoAndFalse" should "perform DoAndFalse" in {
+      List(N(0), S(""), B(false)).foreach((v1)=>{
+        assertResult(v1) {
+          step(Binary(And, v1, e2))
+        }
+      })
+    }
+
+    "DoOrTrue" should "perform DoOrTrue" in {
+      List(N(1), S(" "), B(true)).foreach((v1)=>{
+        assertResult(v1) {
+          step(Binary(Or, v1, e2))
+        }
+      })
+    }
+
+    "DoOrFalse" should "perform DoOrfalse" in {
+      List(N(0), S(""), B(false)).foreach((v1)=>{
+        assertResult(e2) {
+          step(Binary(Or, v1, e2))
+        }
+      })
+    }
+
+    "DoIfTrue" should "perform DoIfTrue" in {
+      List(N(1), S(" "), B(true)).foreach((v1)=>{
+        assertResult(e2) {
+          step(If(v1, e2, e3))
+        }
+      })
+    }
+
+    "DoIfFalse" should "perform DoIfFalse" in {
+      List(N(0), S(""), B(false)).foreach((v1)=>{
+        assertResult(e3) {
+          step(If(v1, e2, e3))
+        }
+      })
     }
 
     "SearchUnary" should "perform SearchUnary" in {

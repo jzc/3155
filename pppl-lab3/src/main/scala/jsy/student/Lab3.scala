@@ -244,11 +244,9 @@ object Lab3 extends JsyApplication with Lab3Like {
       case Binary(Plus, v1, S(s2)) if isValue(v1) => S(toStr(v1)+s2)
 
       //DoArith
-      case Binary(bop, v1, v2) if isValue(v1) && isValue(v2) => bop match {
-        case Minus => N(toNumber(v1) - toNumber(v2))
-        case Times => N(toNumber(v1) * toNumber(v2))
-        case Div   => N(toNumber(v1) / toNumber(v2))
-      }
+      case Binary(Minus, v1, v2) if isValue(v1) && isValue(v2) =>  N(toNumber(v1) - toNumber(v2))
+      case Binary(Times, v1, v2) if isValue(v1) && isValue(v2) =>  N(toNumber(v1) * toNumber(v2))
+      case Binary(Div  , v1, v2) if isValue(v1) && isValue(v2) =>  N(toNumber(v1) / toNumber(v2))
 
       //DoInequalityString
       case Binary(Lt, S(s1), S(s2)) => B(s1 <  s2)
