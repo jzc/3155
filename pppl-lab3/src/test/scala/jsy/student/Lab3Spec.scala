@@ -115,9 +115,20 @@ class Lab3Spec(lab3: Lab3Like) extends FlatSpec {
       }
     }
 
-    "EvalTypeErrorEquality1" should "perform EvalTypeErrorEquality1" in {
+    "EvalTypeErrorEquality" should "perform EvalTypeErrorEquality1" in {
       intercept[DynamicTypeError] {
         eval(envx, Binary(Eq, vidfunction, e2))
+      }
+    }
+    it should "perform EvalTypeErrorEquality2" in {
+      intercept[DynamicTypeError] {
+        eval(envx, Binary(Eq, e1, vidfunction))
+      }
+    }
+
+    "EvalTypeErrorCall" should "perform EvalTypeErrorCall" in {
+      intercept[DynamicTypeError] {
+        eval(envx, Call(v1, e2))
       }
     }
 
@@ -283,9 +294,90 @@ class Lab3Spec(lab3: Lab3Like) extends FlatSpec {
     }
 
     "SearchUnary" should "perform SearchUnary" in {
-      step(e1)
-      assertResult(Unary(Neg, e1p)) {
-        step(Unary(Neg, e1))
+      List(Neg, Not).foreach((uop) => {
+        assertResult(Unary(uop, e1p)) {
+          step(Unary(uop, e1))
+        }
+      })
+    }
+
+    "SearchBinary" should "perform SearchBinary" in {
+      List(
+        Plus, Minus, Times, Div,
+        Eq, Ne,
+        Lt, Le, Gt,Ge,
+        And, Or,
+        Seq
+      ).foreach((bop) => {
+        assertResult(Binary(bop, e1p, e2)) {
+          step(Binary(bop, e1, e2))
+        }
+      })
+    }
+
+    "SearchBinaryArith" should "perform SearchBinaryArith" in {
+      List(
+        Plus, Minus, Times, Div,
+        Lt, Le, Gt, Ge
+      ).foreach((bop) => {
+        assertResult(Binary(bop, v1, e2p)) {
+          step(Binary(bop, v1, e2))
+        }
+      })
+    }
+
+    "SearchEquality" should "perform SearchEquality" in {
+      List(Eq, Ne).foreach((bop) => {
+        assertResult(Binary(bop, v1, e2p)) {
+          step(Binary(bop, v1, e2))
+        }
+      })
+    }
+
+    "TypeErrorEquality" should "perform TypeErrorEquality" in {
+      List(Eq, Ne).foreach((bop) => {
+        intercept[DynamicTypeError] {
+          step(Binary(bop, vidfunction, e2))
+        }
+        intercept[DynamicTypeError] {
+          step(Binary(bop, v1, vidfunction))
+        }
+      })
+    }
+
+    "SearchPrint" should "perform SearchPrint" in {
+      assertResult(Print(e1p)) {
+        step(Print(e1))
+      }
+    }
+
+    "SearchIf" should "perform SearchIf" in {
+      assertResult(If(e1p, e2, e3)) {
+        step(If(e1, e2, e3))
+      }
+    }
+
+    "SearchConst" should "perform SearchConst" in {
+      assertResult(ConstDecl("x", e1p, e2)) {
+        step(ConstDecl("x", e1, e2))
+      }
+    }
+
+    "SearchCall" should "perform SearchCall1" in {
+      assertResult(Call(e1p, e2)) {
+        step(Call(e1, e2))
+      }
+    }
+
+    it should "perform SearchCall2" in {
+      assertResult(Call(vidfunction, e2p)) {
+        step(Call(vidfunction, e2))
+      }
+    }
+
+    "TypeErrorCall" should "perform TypeErrorCall" in {
+      intercept[DynamicTypeError] {
+        step(Call(v1, e2))
       }
     }
   }

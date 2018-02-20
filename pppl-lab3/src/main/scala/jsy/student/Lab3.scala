@@ -42,11 +42,12 @@ object Lab3 extends JsyApplication with Lab3Like {
     require(isValue(v))
     (v: @unchecked) match {
       case N(n) => n
-      case B(b) => if (b) 1 else 0
+      case B(true) => 1
+      case B(false) => 0
+      case Undefined => Double.NaN
       case S(s) => try s.toDouble catch {
         case _: Throwable => Double.NaN
       }
-      case Undefined => Double.NaN
       case Function(_, _, _) => Double.NaN
     }
   }
@@ -54,11 +55,12 @@ object Lab3 extends JsyApplication with Lab3Like {
   def toBoolean(v: Expr): Boolean = {
     require(isValue(v))
     (v: @unchecked) match {
+      case N(n) if n==0 || n.isNaN => false
+      case N(_) => true
       case B(b) => b
-      case N(n) => !n.isNaN && n != 0
-      case S("") => false
-      case S(s) => true
       case Undefined => false
+      case S("") => false
+      case S(_) => true
       case Function(_, _, _) => true
     }
   }
@@ -66,7 +68,7 @@ object Lab3 extends JsyApplication with Lab3Like {
   def toStr(v: Expr): String = {
     require(isValue(v))
     (v: @unchecked) match {
-      case N(n) => if (n.toInt == n) n.toInt.toString else n.toString
+      case N(n) => if (n.isWhole) n.toInt.toString else n.toString
       case B(b) => b.toString
       case S(s) => s
       case Undefined => "undefined"
@@ -130,7 +132,10 @@ object Lab3 extends JsyApplication with Lab3Like {
           case Minus => N(toNumber(ee1) - toNumber(ee2))
           case Times => N(toNumber(ee1) * toNumber(ee2))
           case Div   => N(toNumber(ee1) / toNumber(ee2))
-          case Eq => B(ee1 == ee2)
+          case Eq => (e1,e2) match {
+            case (Function(_,_,_), _) | (_,Function(_,_,_)) => throw DynamicTypeError(e)
+            case _ => B(ee1 == ee2)
+          }
           case Ne => B(ee1 != ee2)
           case Lt => (ee1, ee2) match {
             case (S(s1), S(s2)) => B(s1 < s2)
@@ -178,6 +183,7 @@ object Lab3 extends JsyApplication with Lab3Like {
         v1 match {
           case Function(Some(x1), x2, eprime) => eval(extend(extend(env, x1, v1), x2, v2), eprime)
           case Function(None, x, eprime) => eval(extend(env, x, v2), eprime)
+          case _ => throw DynamicTypeError(e)
         }
       }
     }
@@ -316,6 +322,16 @@ object Lab3 extends JsyApplication with Lab3Like {
         case _ => false
       }) => Binary(bop, v1, step(e2))
 
+      case Binary(bop, Function(_,_,_), e2) if (bop match {
+        case Eq | Ne => true
+        case _ => false
+      }) => throw DynamicTypeError(e)
+
+      case Binary(bop, v1, Function(_,_,_)) if isValue(v1) && (bop match{
+        case Eq | Ne => true
+        case _ => false
+      }) => throw DynamicTypeError(e)
+
       //SearchEquality
       case Binary(bop, v1, e2) if isValue(v1) && !v1.isInstanceOf[Function] && (bop match {
         case Eq | Ne => true
@@ -330,12 +346,14 @@ object Lab3 extends JsyApplication with Lab3Like {
       //SearchConst
       case ConstDecl(x, e1, e2) => ConstDecl(x, step(e1), e2)
 
+      //TypeErrorCal
+      case Call(v1, _) if isValue(v1) && !v1.isInstanceOf[Function] => throw DynamicTypeError(e)
+
       //SearchCall
       case Call(Function(p, x, e1), e2) => Call(Function(p, x, e1), step(e2))
 
       case Call(e1, e2) => Call(step(e1), e2)
 
-      // ****** Your cases here
 
       /* Cases that should never match. Your cases above should ensure this. */
       case Var(_) => throw new AssertionError("Gremlins: internal error, not closed expression.")
