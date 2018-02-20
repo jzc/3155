@@ -268,7 +268,22 @@ class Lab3Spec(lab3: Lab3Like) extends FlatSpec {
       })
     }
 
+    "DoCall" should "perform DoCall" in {
+
+    }
+
+    "DoCallRec" should "perform DoCallRec" in {
+      val x1 = "f"
+      val x2 = "x"
+      val e1 = If(Binary(Eq, Var("x"), N(0)), N(1), Binary(Plus,N(1),Call(Var("f"), Binary(Plus, Var("x"), N(1)))))
+      val v1 = Function(Some(x1), x2, e1)
+      assertResult(substitute(substitute(e1, v1, x1), v2, x2)) {
+        step(Call(v1, v2))
+      }
+    }
+
     "SearchUnary" should "perform SearchUnary" in {
+      step(e1)
       assertResult(Unary(Neg, e1p)) {
         step(Unary(Neg, e1))
       }

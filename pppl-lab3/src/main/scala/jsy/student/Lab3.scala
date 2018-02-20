@@ -101,7 +101,6 @@ object Lab3 extends JsyApplication with Lab3Like {
       /* Base Cases */
       case N(_) | B(_) | S(_) | Undefined | Function(_, _, _) => e
       case Var(x) => lookup(env, x)
-      case Undefined => Undefined
 
       /* And and Or (seperate from other bops because they don't always eval both expressions */
       case Binary(And, e1, e2) => {
@@ -203,17 +202,21 @@ object Lab3 extends JsyApplication with Lab3Like {
       case Unary(uop, e1) => Unary(uop, substitute(e1, v, x))
       case Binary(bop, e1, e2) => Binary(bop, substitute(e1, v, x), substitute(e2, v, x))
       case If(e1, e2, e3) => If(substitute(e1, v, x), substitute(e2, v, x), substitute(e3, v, x))
-      case Call(e1, e2) => ???
+      case Call(e1, e2) => Call(substitute(e1, v, x), substitute(e2, v, x))
       case Var(y) => if (y==x) v else Var(y)
       case Function(None, y, e1) =>
         if (y==x)
           Function(None, y, e1)
         else
           Function(None, y, substitute(e1, v, x))
-      case Function(Some (y1), y2, e1) => ???
+      case Function(Some (y1), y2, e1) =>
+        if (y2==x)
+          Function(Some(y1), y2, e1)
+        else
+          Function(Some(y1), y2, substitute(e1, v, x))
       case ConstDecl(y, e1, e2) =>
         if (y==x)
-          ConstDecl(y, e1, e2)
+          ConstDecl(y, substitute(e1, v, x), e2)
         else
           ConstDecl(y, substitute(e1, v, x), substitute(e2, v, x))
     }
@@ -252,7 +255,7 @@ object Lab3 extends JsyApplication with Lab3Like {
       case Binary(Lt, S(s1), S(s2)) => B(s1 <  s2)
       case Binary(Le, S(s1), S(s2)) => B(s1 <= s2)
       case Binary(Gt, S(s1), S(s2)) => B(s1 >  s2)
-      case Binary(Gt, S(s1), S(s2)) => B(s1 >= s2)
+      case Binary(Ge, S(s1), S(s2)) => B(s1 >= s2)
 
       //DoInequalityNumber
       case Binary(Lt, v1, v2) if isValue(v1) && isValue(v2) => B(toNumber(v1) <  toNumber(v2))
@@ -287,10 +290,50 @@ object Lab3 extends JsyApplication with Lab3Like {
       //DoIfFalse
       case If(v1, _, e3) if isValue(v1) && !toBoolean(v1) => e3
 
+      //DoConst
+      case ConstDecl(x, v1, e2) if isValue(v1) => substitute(e2, v1, x)
+
+      //DoCall
+      case Call(Function(None, x, e1), v2) if isValue(v2) => substitute(e1, v2, x)
+
+      //DoCallRec
+      case Call(Function(Some(x1), x2, e1), v2) if isValue(v2) =>{
+        val v1 = Function(Some(x1), x2, e1)
+        substitute(substitute(e1, v1, x1), v2, x2)
+      }
+
       /* Inductive Cases: Search Rules */
+
+      //SearchPrint
       case Print(e1) => Print(step(e1))
+
+      //SearchUnary
       case Unary(uop, e1) => Unary(uop, step(e1))
 
+      //SearchBinaryArith
+      case Binary(bop, v1, e2) if isValue(v1) && (bop match {
+        case Plus | Minus | Times | Div | Lt | Le | Gt | Ge => true
+        case _ => false
+      }) => Binary(bop, v1, step(e2))
+
+      //SearchEquality
+      case Binary(bop, v1, e2) if isValue(v1) && !v1.isInstanceOf[Function] && (bop match {
+        case Eq | Ne => true
+        case _ => false
+      }) => Binary(bop, v1, step(e2))
+
+      case Binary(bop, e1, e2) => Binary(bop, step(e1), e2)
+
+      //SearchIf
+      case If(e1, e2, e3) => If(step(e1), e2, e3)
+
+      //SearchConst
+      case ConstDecl(x, e1, e2) => ConstDecl(x, step(e1), e2)
+
+      //SearchCall
+      case Call(Function(p, x, e1), e2) => Call(Function(p, x, e1), step(e2))
+
+      case Call(e1, e2) => Call(step(e1), e2)
 
       // ****** Your cases here
 
