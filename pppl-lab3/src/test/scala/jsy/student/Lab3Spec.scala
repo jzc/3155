@@ -159,18 +159,17 @@ class Lab3Spec(lab3: Lab3Like) extends FlatSpec {
       }
     }
 
-    "DoPlusString" should "perform DoPlusString" in {
-      {
-        val strp = toStr(str1) + toStr(v2)
-        assertResult(S(strp)) {
-          step(Binary(Plus, str1, v2))
-        }
+    "DoPlusString" should "perform DoPlusString1" in {
+      val strp = toStr(str1) + toStr(v2)
+      assertResult(S(strp)) {
+        step(Binary(Plus, str1, v2))
       }
-      {
-        val strp = toStr(v1) + toStr(str2)
-        assertResult(S(strp)) {
-          step(Binary(Plus, v1, str2))
-        }
+    }
+
+    it should "perform DoPlusString2" in {
+      val strp = toStr(v1) + toStr(str2)
+      assertResult(S(strp)) {
+        step(Binary(Plus, v1, str2))
       }
     }
 

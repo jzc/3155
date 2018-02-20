@@ -209,14 +209,14 @@ object Lab3 extends JsyApplication with Lab3Like {
       case Binary(bop, e1, e2) => Binary(bop, substitute(e1, v, x), substitute(e2, v, x))
       case If(e1, e2, e3) => If(substitute(e1, v, x), substitute(e2, v, x), substitute(e3, v, x))
       case Call(e1, e2) => Call(substitute(e1, v, x), substitute(e2, v, x))
-      case Var(y) => if (y==x) v else Var(y)
+      case Var(y) => if (y==x) v else e
       case Function(None, y, e1) =>
         if (y==x)
           Function(None, y, e1)
         else
           Function(None, y, substitute(e1, v, x))
       case Function(Some (y1), y2, e1) =>
-        if (y2==x)
+        if (y1==x || y2 ==x)
           Function(Some(y1), y2, e1)
         else
           Function(Some(y1), y2, substitute(e1, v, x))
@@ -248,8 +248,9 @@ object Lab3 extends JsyApplication with Lab3Like {
       case Binary(Plus, v1, v2) if isValue(v1) && !v1.isInstanceOf[S] && isValue(v2) && !v2.isInstanceOf[S] =>
         N(toNumber(v1) + toNumber(v2))
 
-      //DoPlusString
+      //DoPlusString1
       case Binary(Plus, S(s1), v2) if isValue(v2) => S(s1+toStr(v2))
+      //DoPlusString2
       case Binary(Plus, v1, S(s2)) if isValue(v1) => S(toStr(v1)+s2)
 
       //DoArith
@@ -317,26 +318,17 @@ object Lab3 extends JsyApplication with Lab3Like {
       case Unary(uop, e1) => Unary(uop, step(e1))
 
       //SearchBinaryArith
-      case Binary(bop, v1, e2) if isValue(v1) && (bop match {
-        case Plus | Minus | Times | Div | Lt | Le | Gt | Ge => true
-        case _ => false
-      }) => Binary(bop, v1, step(e2))
+      case Binary(bop @ (Plus | Minus | Times | Div | Lt | Le | Gt | Ge), v1, e2) if isValue(v1) => Binary(bop, v1, step(e2))
 
-      case Binary(bop, Function(_,_,_), e2) if (bop match {
-        case Eq | Ne => true
-        case _ => false
-      }) => throw DynamicTypeError(e)
 
-      case Binary(bop, v1, Function(_,_,_)) if isValue(v1) && (bop match{
-        case Eq | Ne => true
-        case _ => false
-      }) => throw DynamicTypeError(e)
+      //TypeErrorEquality
+      case Binary(Eq | Ne, Function(_,_,_), e2) => throw DynamicTypeError(e)
+
+      //
+      case Binary(Eq | Ne, v1, Function(_,_,_)) if isValue(v1) => throw DynamicTypeError(e)
 
       //SearchEquality
-      case Binary(bop, v1, e2) if isValue(v1) && !v1.isInstanceOf[Function] && (bop match {
-        case Eq | Ne => true
-        case _ => false
-      }) => Binary(bop, v1, step(e2))
+      case Binary(bop @ (Eq | Ne), v1, e2) if isValue(v1) => Binary(bop, v1, step(e2))
 
       case Binary(bop, e1, e2) => Binary(bop, step(e1), e2)
 
@@ -350,7 +342,7 @@ object Lab3 extends JsyApplication with Lab3Like {
       case Call(v1, _) if isValue(v1) && !v1.isInstanceOf[Function] => throw DynamicTypeError(e)
 
       //SearchCall
-      case Call(Function(p, x, e1), e2) => Call(Function(p, x, e1), step(e2))
+      case Call(e1 @ Function(_,_,_), e2) => Call(e1, step(e2))
 
       case Call(e1, e2) => Call(step(e1), e2)
 
