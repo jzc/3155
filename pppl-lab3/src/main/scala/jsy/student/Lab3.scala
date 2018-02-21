@@ -136,7 +136,10 @@ object Lab3 extends JsyApplication with Lab3Like {
             case (Function(_,_,_), _) | (_,Function(_,_,_)) => throw DynamicTypeError(e)
             case _ => B(ee1 == ee2)
           }
-          case Ne => B(ee1 != ee2)
+          case Ne => (e1,e2) match {
+            case (Function(_, _, _), _) | (_, Function(_, _, _)) => throw DynamicTypeError(e)
+            case _ => B(ee1 != ee2)
+          }
           case Lt => (ee1, ee2) match {
             case (S(s1), S(s2)) => B(s1 < s2)
             case _ =>   B(toNumber(ee1) < toNumber(ee2))
@@ -195,7 +198,7 @@ object Lab3 extends JsyApplication with Lab3Like {
   def iterate(e0: Expr)(next: (Expr, Int) => Option[Expr]): Expr = {
     def loop(e: Expr, n: Int): Expr = next(e, n) match {
       case None => e
-      case Some(e) => loop(e, n+1)
+      case Some(ep) => loop(ep, n+1)
     }
     loop(e0, 0)
   }
@@ -304,10 +307,7 @@ object Lab3 extends JsyApplication with Lab3Like {
       case Call(Function(None, x, e1), v2) if isValue(v2) => substitute(e1, v2, x)
 
       //DoCallRec
-      case Call(Function(Some(x1), x2, e1), v2) if isValue(v2) =>{
-        val v1 = Function(Some(x1), x2, e1)
-        substitute(substitute(e1, v1, x1), v2, x2)
-      }
+      case Call(v1 @ Function(Some(x1), x2, e1), v2) if isValue(v2) => substitute(substitute(e1, v1, x1), v2, x2)
 
       /* Inductive Cases: Search Rules */
 
@@ -320,11 +320,10 @@ object Lab3 extends JsyApplication with Lab3Like {
       //SearchBinaryArith
       case Binary(bop @ (Plus | Minus | Times | Div | Lt | Le | Gt | Ge), v1, e2) if isValue(v1) => Binary(bop, v1, step(e2))
 
+      //TypeErrorEquality
+      case Binary(Eq | Ne, Function(_,_,_), _) => throw DynamicTypeError(e)
 
       //TypeErrorEquality
-      case Binary(Eq | Ne, Function(_,_,_), e2) => throw DynamicTypeError(e)
-
-      //
       case Binary(Eq | Ne, v1, Function(_,_,_)) if isValue(v1) => throw DynamicTypeError(e)
 
       //SearchEquality
