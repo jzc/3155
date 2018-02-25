@@ -40,17 +40,19 @@ Binary(Plus, N(0), N(2)) match {
 //    "console.log(car(p));" +
 //    "console.log(cdr(p));"
 //))
-//
-//val program = parse(
-//  "const a = 0;" +
-//  "const apple  = (dummy) => console.log(a);" +
-//  "const banana = (a) => apple(0);" +
-//  "apple(0), banana(5);"
-//)
-//
-//eval(empty, program)
-//iterateStep(program)
-//extend(extend(empty, "x", N(1)), "x", N(2))
+
+val program = parse(
+  "const a = 0;" +
+  "const apple  = (dummy) => console.log(a);" +
+  "const banana = (a) => apple(0);" +
+  "apple(0), banana(5);"
+)
+
+println("eval")
+eval(empty, program)
+
+println("step")
+iterateStep(program)
 
 
 eval(empty, parse(
@@ -78,3 +80,7 @@ f(2)
 *
 * }(1)
 * */
+
+val p = parse("const x = 1; const g = (y) => x; ((x) => g(2))(3);")
+iterateStep(p)
+eval(empty, p)

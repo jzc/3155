@@ -1,0 +1,5 @@
+const x = 1
+const f = (y) => x+y;
+const g = (x) => f(1);
+g(2);
+
