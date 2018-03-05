@@ -46,10 +46,28 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
 
     val numbers = List(
       parse("1"),
-      parse("1+2*3/4"),
-      parse("(1<2),3"),
-      parse("true ? 1 : 2")
+      parse("1+2*3/4")
+//      parse("(1<2),3"),
+//      parse("true ? 1 : 2")
     )
+
+    val strings = List(
+      parse("'1'"),
+      parse("'1'+'1'")
+    )
+
+    val bools = List(
+      parse("true"),
+      parse("false")
+    )
+
+    var undefineds = List(
+      parse("undefined"),
+      parse("console.log(1)")
+    )
+
+    var notnumbers = strings ::: bools ::: undefineds
+    var notfuncs = numbers ::: strings ::: bools ::: undefineds
 
     "TypeVar" should "perform TypeVar" in {
       assertResult(xtype) {
@@ -87,6 +105,103 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
           typeof(empty, Unary(Neg,e1))
         }
       })
+    }
+
+    it should "throw ste when e1 is not a number" in {
+      notnumbers.foreach(e1 => {
+        intercept[StaticTypeError] {
+          typeof(empty, Unary(Neg, e1))
+        }
+      })
+    }
+
+    val arith = List(Plus, Minus, Times, Div)
+
+    "TypeArith" should "perform TypeArith" in {
+      numbers.zip(numbers).foreach(t => {
+        val (e1, e2) = t
+        arith.foreach(bop => {
+          assertResult(TNumber) {
+            typeof(empty, Binary(bop, e1, e2))
+          }
+        })
+      })
+    }
+
+    it should "throw ste when not both numbers" in {
+      List(
+        numbers.zip(strings),
+        numbers.zip(bools),
+        numbers.zip(undefineds)
+      ).foreach(c => c.foreach(t => {
+        val (e1, e2) = t
+        arith.foreach(bop => {
+          intercept[StaticTypeError] {
+            typeof(empty, Binary(bop, e1, e2))
+          }
+        })
+      }))
+    }
+
+    "TypePlusString" should "perform TypePlusString" in {
+      strings.zip(strings).foreach(t => {
+        val (e1, e2) = t
+        assertResult(TString) {
+          typeof(empty, Binary(Plus, e1, e2))
+        }
+      })
+    }
+
+    "TypeInequalityNumber" should "perform TypeInequalityNumber" in {
+      numbers.zip(numbers).foreach(t => {
+        val (e1, e2) = t
+        List(Lt, Le, Gt, Ge).foreach(bop => {
+          assertResult(TBool) {
+            typeof(empty, Binary(bop, e1, e2))
+          }
+        })
+      })
+    }
+
+    "TypeInequalityString" should "perform TypeInequalityString" in {
+      strings.zip(strings).foreach(t => {
+        val (e1, e2) = t
+        List(Lt, Le, Gt, Ge).foreach(bop => {
+          assertResult(TBool) {
+            typeof(empty, Binary(bop, e1, e2))
+          }
+        })
+      })
+    }
+
+    "TypeEquality" should "perform TypeEquality" in {
+      notfuncs.zip(notfuncs).foreach(t => {
+        val (e1, e2) = t
+        List(Eq, Ne).foreach(bop => {
+          assertResult(TBool) {
+            typeof(empty, Binary(bop, e1, e2))
+          }
+        })
+      })
+    }
+
+    it should "throw ste when there is a function" in {
+
+    }
+
+    "TypeAndOr" should "perform TypeAndOr" in {
+      bools.zip(bools).foreach(t => {
+        val (e1, e2) = t
+        List(And, Or).foreach(bop => {
+          assertResult(TBool) {
+            typeof(empty, Binary(bop, e1, e2))
+          }
+        })
+      })
+    }
+
+    "TypeIf" should "perform TypeIf" in {
+
     }
 
     // Probably want to write some more tests for typeInfer, substitute, and step.

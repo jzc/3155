@@ -38,6 +38,4 @@ strictlyOrdered(treeFromList(List(1,1,2)))
 
 strictlyOrdered(treeFromList(List(1,2)))
 
-parse("function f(n: number): number { return n === 0 ? 0 : f(n - 1) }")
-
-err(TNumber, Binary(Plus,N(1),S("hello")))
+parse("''")

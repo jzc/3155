@@ -117,11 +117,18 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         case (TString, TString) => TString
         case (tgot, _) => err(tgot, e1)
       }
-        ???
-      case Binary(Minus|Times|Div, e1, e2) => 
-        ???
-      case Binary(Eq|Ne, e1, e2) =>
-        ???
+      case Binary(Minus|Times|Div, e1, e2) => (typeof(env, e1), typeof(env, e2)) match {
+        case (TNumber, TNumber) => TNumber
+        case (tgot, _) => err(tgot, e1)
+      }
+      case Binary(Eq|Ne, e1, e2) => {
+        val t1 = typeof(env, e1)
+        val t2 = typeof(env, e2)
+        if (t1 == t2 && !t1.isInstanceOf[TFunction] && !t2.isInstanceOf[TFunction])
+          TBool
+        else
+          err(t1, e1)
+      }
       case Binary(Lt|Le|Gt|Ge, e1, e2) =>
         ???
       case Binary(And|Or, e1, e2) =>
