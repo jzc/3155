@@ -39,3 +39,15 @@ strictlyOrdered(treeFromList(List(1,1,2)))
 strictlyOrdered(treeFromList(List(1,2)))
 
 parse("''")
+
+
+//List(("a",1),("b",2)).foldLeft(empty[Int]){(a, v) =>
+//  val (x, t) = v
+//  extend(a, x, t)
+//}
+//
+//MTyp(MConst, TNumber).t
+
+parse("()=>1")
+
+List() == Nil

@@ -91,10 +91,17 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
   // worth studying to see how library methods are used.
   def hasFunctionTyp(t: Typ): Boolean = t match {
     case TFunction(_, _) => true
+      //ask about
     case TObj(fields) if (fields exists { case (_, t) => hasFunctionTyp(t) }) => true
     case _ => false
   }
-  
+
+  def bindParams(params: List[(String, MTyp)], init: TEnv): TEnv =
+    params.foldLeft(init)((acc, t) => {
+      val (x, mtyp) = t
+      extend(acc, x, mtyp.t)
+    })
+
   def typeof(env: TEnv, e: Expr): Typ = {
     def err[T](tgot: Typ, e1: Expr): T = throw StaticTypeError(tgot, e1, e)
 
@@ -110,8 +117,10 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         case TNumber => TNumber
         case tgot => err(tgot, e1)
       }
-      case Unary(Not, e1) =>
-        ???
+      case Unary(Not, e1) => typeof(env, e1) match {
+        case TBool => TBool
+        case tgot => err(tgot, e1)
+      }
       case Binary(Plus, e1, e2) => (typeof(env, e1), typeof(env, e2)) match {
         case (TNumber, TNumber) => TNumber
         case (TString, TString) => TString
@@ -124,38 +133,55 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case Binary(Eq|Ne, e1, e2) => {
         val t1 = typeof(env, e1)
         val t2 = typeof(env, e2)
-        if (t1 == t2 && !t1.isInstanceOf[TFunction] && !t2.isInstanceOf[TFunction])
+        if (t1 == t2 && !hasFunctionTyp(t1) && !hasFunctionTyp(t2))
           TBool
         else
           err(t1, e1)
       }
-      case Binary(Lt|Le|Gt|Ge, e1, e2) =>
-        ???
-      case Binary(And|Or, e1, e2) =>
-        ???
-      case Binary(Seq, e1, e2) =>
-        ???
-      case If(e1, e2, e3) =>
-        ???
+      case Binary(Lt|Le|Gt|Ge, e1, e2) => (typeof(env, e1), typeof(env, e2)) match {
+        case (TNumber, TNumber) => TNumber
+        case (TString, TString) => TString
+        case (tgot, _) => err(tgot, e1)
+      }
+      case Binary(And|Or, e1, e2) => (typeof(env, e1), typeof(env, e2)) match {
+        case (TBool, TBool) => TBool
+      }
+      case Binary(Seq, e1, e2) => typeof(env, e2)
+      case If(e1, e2, e3) => typeof(env, e1) match {
+        case TBool => {
+          val t1 = typeof(env, e2)
+          val t2 = typeof(env, e3)
+          if (t1 == t2) t1 else err(t2, e3)
+        }
+        case tgot => err(tgot, e1)
+      }
       case Function(p, params, tann, e1) => {
+
         // Bind to env1 an environment that extends env with an appropriate binding if
         // the function is potentially recursive.
         val env1 = (p, tann) match {
           /***** Add cases here *****/
+          case (None, _) => env
+          case (Some(p), Some(tann)) => extend(env, p, tann)
           case _ => err(TUndefined, e1)
         }
         // Bind to env2 an environment that extends env1 with bindings for params.
-        val env2 = ???
+        val env2 = bindParams(params, env1)
         // Infer the type of the function body
-        val t1 = ???
+        val t1 = typeof(env2, e1)
         // Check with the possibly annotated return type
-        ???
+        if (t1 != tann)
+          err(t1, e1)
+        else
+          TFunction(params, t1)
       }
       case Call(e1, args) => typeof(env, e1) match {
-        case TFunction(params, tret) if (params.length == args.length) =>
-          (params zip args).foreach {
-            ???
-          };
+        case TFunction(params, tret) if params.length == args.length =>
+          (params zip args).foreach {t =>
+            val ((x, p), a) = t
+            val at = typeof(env, a)
+            if (p != at) err(at, e1)
+          }
           tret
         case tgot => err(tgot, e1)
       }

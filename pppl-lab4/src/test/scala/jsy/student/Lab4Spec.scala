@@ -115,6 +115,14 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       })
     }
 
+    "TypeNot" should "perform TypeNot" in {
+
+    }
+
+    "TypeSeq" should "perform TypeSeq" in {
+
+    }
+
     val arith = List(Plus, Minus, Times, Div)
 
     "TypeArith" should "perform TypeArith" in {
@@ -201,8 +209,58 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
     }
 
     "TypeIf" should "perform TypeIf" in {
+      intercept[StaticTypeError] {
+        typeof(empty, If(N(1), N(2), N(3)))
+      }
+      intercept[StaticTypeError] {
+        typeof(empty, If(B(false), N(1), S("2")))
+      }
+      intercept[StaticTypeError] {
+        typeof(empty, If(B(false), S("1"), N(2)))
+      }
+    }
+
+    "TypePrint" should "perform TypePrint" in {
+      assertResult(TUndefined) {
+        typeof(empty, Print(N(1)))
+      }
+    }
+
+    "TypeDecl" should "perform TypeDecl" in {
+      assertResult(TNumber) {
+        typeof(empty, Decl(MConst, "x", N(1), Var("x")))
+      }
+      assertResult(TString) {
+        typeof(empty, Decl(MConst, "x", N(1), S("hello")))
+      }
+    }
+
+    "TypeCall" should "perform TypeCall" in {
 
     }
+
+    "TypeGetField" should "perform TypeGetField" in {
+
+    }
+
+    "TypeFunctinon" should "throw ste if no type annotation and named" in {
+      intercept[StaticTypeError] {
+        typeof(empty, Function(Some("f"), Nil, None, N(1)))
+      }
+    }
+
+    it should "bind the parameters correctly" in {
+      val params = List(("a",MTyp(MConst, TNumber)), ("b", MTyp(MName, TString)))
+      val correct = Map(("a", TNumber), ("b", TString))
+      assertResult(correct) {
+        bindParams(params, empty)
+      }
+    }
+
+    "TypeCall" should "performTypeCall" in {
+
+    }
+
 
     // Probably want to write some more tests for typeInfer, substitute, and step.
 
