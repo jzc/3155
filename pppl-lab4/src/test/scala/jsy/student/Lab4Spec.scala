@@ -119,6 +119,8 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
 
     }
 
+    it should "throw ste if e1 is not bool"
+
     "TypeSeq" should "perform TypeSeq" in {
 
     }
@@ -160,6 +162,8 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       })
     }
 
+    it should "throw ste if e1 and e2 are not string"
+
     "TypeInequalityNumber" should "perform TypeInequalityNumber" in {
       numbers.zip(numbers).foreach(t => {
         val (e1, e2) = t
@@ -170,6 +174,8 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
         })
       })
     }
+
+    it should "throw ste if e1 and e2 are not number"
 
     "TypeInequalityString" should "perform TypeInequalityString" in {
       strings.zip(strings).foreach(t => {
@@ -182,6 +188,8 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       })
     }
 
+    it should "throw ste if e1 and e2 are not string"
+
     "TypeEquality" should "perform TypeEquality" in {
       notfuncs.zip(notfuncs).foreach(t => {
         val (e1, e2) = t
@@ -193,7 +201,7 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       })
     }
 
-    it should "throw ste when there is a function" in {
+    it should "throw ste when there is a function types" in {
 
     }
 
@@ -207,6 +215,8 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
         })
       })
     }
+
+    it should "throw ste if e1 and e2 are not bools"
 
     "TypeIf" should "perform TypeIf" in {
       intercept[StaticTypeError] {
@@ -235,12 +245,37 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       }
     }
 
-    "TypeCall" should "perform TypeCall" in {
-
+    val obj = Obj(Map(
+      ("a", Binary(Plus, N(1), N(2))),
+      ("b", Binary(Eq, N(1), N(2))),
+      ("c", Print(S("Hello"))),
+      ("d", S("World"))
+    ))
+    "TypeGetField" should "perform TypeGetField" in {
+      assertResult(TNumber) {
+        typeof(empty, GetField(obj, "a"))
+      }
+      assertResult(TBool) {
+        typeof(empty, GetField(obj, "b"))
+      }
+      assertResult(TUndefined) {
+        typeof(empty, GetField(obj, "c"))
+      }
+      assertResult(TString) {
+        typeof(empty, GetField(obj, "d"))
+      }
     }
 
-    "TypeGetField" should "perform TypeGetField" in {
+    it should "throw ste if e1 is not obj" in {
+      intercept[StaticTypeError] {
+        typeof(empty, GetField(N(1), "a"))
+      }
+    }
 
+    it should "throw ste if field does not exist" in {
+      intercept[StaticTypeError] {
+        typeof(empty, GetField(obj, "x"))
+      }
     }
 
     "TypeFunctinon" should "throw ste if no type annotation and named" in {
@@ -253,12 +288,69 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       val params = List(("a",MTyp(MConst, TNumber)), ("b", MTyp(MName, TString)))
       val correct = Map(("a", TNumber), ("b", TString))
       assertResult(correct) {
-        bindParams(params, empty)
+        Lab4.bindParams(params, empty)
       }
     }
 
-    "TypeCall" should "performTypeCall" in {
+    it should "throw ste if type annotation is different from infered" in {
+      intercept[StaticTypeError] {
+        typeof(empty, Function(None, Nil, Some(TNumber), S("hello")))
+      }
+    }
 
+    it should "infer type of anonymous function" in {
+      assertResult(TFunction(Nil, TNumber)) {
+        typeof(empty, Function(None, Nil, None, N(1)))
+      }
+      assertResult(TFunction(List(("x", MTyp(MConst, TString))), TString)) {
+        typeof(empty, Function(None, List(("x", MTyp(MConst, TString))), None, Var("x")))
+      }
+    }
+
+    it should "perform TypeFunction" in {
+      assertResult(TFunction(Nil, TNumber)) {
+        typeof(empty, Function(None, Nil, Some(TNumber), N(1)))
+      }
+    }
+
+    {
+      val f = Function(
+        None,
+        List(("x", MTyp(MConst, TNumber)), ("y", MTyp(MConst, TNumber)), ("z", MTyp(MConst, TNumber))),
+        None,
+        Binary(Plus, Binary(Plus, Var("x"), Var("y")), Var("z"))
+      )
+      "TypeCall" should "should throw ste if incorrect number of params" in {
+        intercept[StaticTypeError] {
+          typeof(empty, Call(f, Nil))
+        }
+      }
+
+      it should "throw ste if param types dont match" in {
+        intercept[StaticTypeError] {
+          typeof(empty, Call(f, List(N(1),S("2"),N(3))))
+        }
+        intercept[StaticTypeError] {
+          typeof(empty, Call(f, List(S("1"),N(2),N(3))))
+        }
+        intercept[StaticTypeError] {
+          typeof(empty, Call(f, List(N(1),N(2),S("3"))))
+        }
+      }
+
+      it should "perform TypeCall" in {
+        assertResult(TNumber) {
+          typeof(empty, Call(f, List(N(1),N(2),N(3))))
+        }
+      }
+    }
+
+
+    "TypeObject" should "perform TypeObject" in {
+      val fields = Map(("a", TNumber), ("b", TBool), ("c", TUndefined), ("d", TString))
+      assertResult(TObj(fields)) {
+        typeof(empty, obj)
+      }
     }
 
 

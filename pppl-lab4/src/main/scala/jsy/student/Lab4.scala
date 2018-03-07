@@ -76,8 +76,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
     l.foldLeft(Empty: Tree){ (acc, i) => acc insert i }
 
   def strictlyOrdered(t: Tree): Boolean = {
-    foldLeft(t)((true, None: Option[Int])) { (A, c) =>
-      val (acc, prev) = A
+    foldLeft(t)((true, None: Option[Int])) { case ((acc, prev), c) =>
       prev match {
         case Some(p) => (acc && (c > p), Some(c))
         case _ => (acc, Some(c))
@@ -97,10 +96,11 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
   }
 
   def bindParams(params: List[(String, MTyp)], init: TEnv): TEnv =
-    params.foldLeft(init)((acc, t) => {
-      val (x, mtyp) = t
-      extend(acc, x, mtyp.t)
-    })
+    params.foldLeft(init) { case (acc, (x, MTyp(_, t))) => extend(acc, x, t) }
+  //    params.foldLeft(init)((acc, t) => {
+//      val (x, mtyp) = t
+//      extend(acc, x, mtyp.t)
+//    })
 
   def typeof(env: TEnv, e: Expr): Typ = {
     def err[T](tgot: Typ, e1: Expr): T = throw StaticTypeError(tgot, e1, e)
@@ -139,12 +139,12 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
           err(t1, e1)
       }
       case Binary(Lt|Le|Gt|Ge, e1, e2) => (typeof(env, e1), typeof(env, e2)) match {
-        case (TNumber, TNumber) => TNumber
-        case (TString, TString) => TString
-        case (tgot, _) => err(tgot, e1)
+        case (TNumber, TNumber) | (TString, TString) => TBool
+        case (_, tgot) => err(tgot, e2)
       }
       case Binary(And|Or, e1, e2) => (typeof(env, e1), typeof(env, e2)) match {
         case (TBool, TBool) => TBool
+        case (_, tgot) => err(tgot, e2)
       }
       case Binary(Seq, e1, e2) => typeof(env, e2)
       case If(e1, e2, e3) => typeof(env, e1) match {
@@ -170,23 +170,31 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         // Infer the type of the function body
         val t1 = typeof(env2, e1)
         // Check with the possibly annotated return type
-        if (t1 != tann)
-          err(t1, e1)
-        else
-          TFunction(params, t1)
+        tann match {
+          case Some(tann) if tann != t1 => err(t1, e1)
+          case _ => ()
+        }
+        TFunction(params, t1)
       }
       case Call(e1, args) => typeof(env, e1) match {
         case TFunction(params, tret) if params.length == args.length =>
-          (params zip args).foreach {t =>
-            val ((x, p), a) = t
-            val at = typeof(env, a)
-            if (p != at) err(at, e1)
+          (params zip args).foreach {
+              case ((_, MTyp(_,p)), a) => {
+                val at = typeof(env, a)
+                if (p != at) err(at, e1)
+              }
           }
           tret
         case tgot => err(tgot, e1)
       }
-      case Obj(fields) => ???
-      case GetField(e1, f) => ???
+      case Obj(fields) => TObj(fields.mapValues(typeof(env, _)))
+      case GetField(e1, f) => typeof(env, e1) match {
+        case t1 @ TObj(tfields) => tfields.get(f) match {
+          case Some(t) => t
+          case _ => err(t1, e1)
+        }
+        case tgot => err(tgot, e1)
+      }
     }
   }
   

@@ -44,7 +44,6 @@ trait Lab4Like { a: JsyApplication =>
 
   /* Type Inference */
   type TEnv = Map[String, Typ]
-  def bindParams(params: List[(String, MTyp)], init: TEnv): TEnv
   def typeof(env: TEnv, e: Expr): Typ
 
   /* Step */

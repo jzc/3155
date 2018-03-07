@@ -51,3 +51,9 @@ parse("''")
 parse("()=>1")
 
 List() == Nil
+
+Map(("a",1), ("b", 2), ("c", 3)).mapValues(_*2)
+
+typeof(empty, Binary(Le, N(1), N(2)))
+
+val f:MTyp=>Typ = { case MTyp(_,t) => t }; f(MTyp(MConst, TNumber))
