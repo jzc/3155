@@ -132,7 +132,15 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
     }
 
     "TypeSeq" should "perform TypeSeq" in {
+      assertResult(TString) {
+        typeof(empty, Binary(Seq, N(1), S("hello")))
+      }
+    }
 
+    it should "throw ste if e1 throws ste" in {
+      intercept[StaticTypeError] {
+        typeof(empty, Binary(Seq, Binary(Plus,S("bad"),N(1)), S("seq")))
+      }
     }
 
     val arith = List(Plus, Minus, Times, Div)
@@ -397,6 +405,72 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       }
     }
 
+    val params = List(
+      ("x", MTyp(MConst, TNumber)),
+      ("y", MTyp(MConst, TString)),
+      ("z", MTyp(MName, TBool))
+    )
+    "substitute" should "substitute x into a function body if x is not in params" in {
+      assertResult(Function(None, params, None, N(1))) {
+        substitute(Function(None, params, None, Var("a")),N(1),"a")
+      }
+    }
+
+    it should "not substitute x into a function body if x is in params" in {
+      assertResult(Function(None, params, None, Var("x"))) {
+        substitute(Function(None, params, None, Var("x")),N(1),"x")
+      }
+    }
+
+    it should "not substitute x into a function body if x is the function name" in {
+      assertResult(Function(Some("f"), params, None, Var("f"))) {
+        substitute(Function(Some("f"), params, None, Var("f")),N(1),"f")
+      }
+    }
+
+    it should "substitute into all arguments of a call" in {
+      assertResult(Call(
+        Function(None, List(
+          ("a", MTyp(MConst, TNumber)),
+          ("b", MTyp(MConst, TNumber)),
+          ("c", MTyp(MConst, TNumber))
+        ), Some(TNumber), N(1)),
+        List(N(1), Binary(Plus, N(1), N(1)), Binary(Plus, N(1), N(2)))
+      )) {
+        substitute(Call(
+          Function(None, List(
+            ("a", MTyp(MConst, TNumber)),
+            ("b", MTyp(MConst, TNumber)),
+            ("c", MTyp(MConst, TNumber))
+          ), Some(TNumber), Var("x")),
+          List(Var("x"), Binary(Plus, Var("x"), N(1)), Binary(Plus, Var("x"), N(2)))
+        ), N(1), "x")
+      }
+    }
+
+    it should "substitute into all obj fields" in {
+      assertResult(Obj(Map(
+        ("a", N(1)),
+        ("b", Binary(Plus, N(1), N(1))),
+        ("c", Binary(Plus, N(1), N(2)))
+      ))) {
+        substitute(Obj(Map(
+          ("a", Var("x")),
+          ("b", Binary(Plus, Var("x"), N(1))),
+          ("c", Binary(Plus, Var("x"), N(2)))
+        )), N(1), "x")
+      }
+    }
+
+    it should "substitute when getting field" in {
+      val obj = Obj(Map(
+        ("f", N(1)),
+        ("g", S("hello"))
+      ))
+      assertResult(GetField(obj, "f")) {
+        substitute(GetField(Var("x"), "f"), obj, "x")
+      }
+    }
 
     // Probably want to write some more tests for typeInfer, substitute, and step.
 

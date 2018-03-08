@@ -146,7 +146,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         case (TBool, TBool) => TBool
         case (_, tgot) => err(tgot, e2)
       }
-      case Binary(Seq, e1, e2) => typeof(env, e2)
+      case Binary(Seq, e1, e2) => typeof(env, e1); typeof(env, e2)
       case If(e1, e2, e3) => typeof(env, e1) match {
         case TBool => {
           val t1 = typeof(env, e2)
@@ -234,23 +234,35 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case N(_) | B(_) | Undefined | S(_) => e
       case Print(e1) => Print(substitute(e1, esub, x))
         /***** Cases from Lab 3 */
-      case Unary(uop, e1) => ???
-      case Binary(bop, e1, e2) => ???
-      case If(e1, e2, e3) => ???
-      case Var(y) => ???
-      case Decl(mode, y, e1, e2) => ???
+      case Unary(uop, e1) => Unary(uop, subst(e1))
+      case Binary(bop, e1, e2) => Binary(bop, subst(e1), subst(e2))
+      case If(e1, e2, e3) => If(subst(e1), subst(e2), subst(e3))
+      case Var(y) => if (y == x) esub else e
+      case Decl(mode, y, e1, e2) =>
+        if (y == x)
+          Decl(mode, y, subst(e1), e2)
+        else
+          Decl(mode, y, subst(e1), subst(e2))
         /***** Cases needing adapting from Lab 3 */
-      case Function(p, params, tann, e1) =>
-        ???
-      case Call(e1, args) => ???
+      case Function(p, params, tann, e1) => {
+        val bound = p match {
+          case Some(p) => p :: params.map { case (xi, _) => xi}
+          case None => params.map { case (xi, _) => xi }
+        }
+        if (bound.contains(x))
+          Function(p, params, tann, e1)
+        else
+          Function(p, params, tann, subst(e1))
+      }
+      case Call(e1, args) => Call(subst(e1), args.map(ei => subst(ei)))
         /***** New cases for Lab 4 */
-      case Obj(fields) => ???
-      case GetField(e1, f) => ???
+      case Obj(fields) => Obj(fields.mapValues(ei => subst(ei)))
+      case GetField(e1, f) => GetField(subst(e1), f)
     }
 
-    val fvs = freeVars(???)
-    def fresh(x: String): String = if (???) fresh(x + "$") else x
-    subst(???)
+//    val fvs = freeVars(???)
+//    def fresh(x: String): String = if (???) fresh(x + "$") else x
+    subst(e)
   }
 
   /* Rename bound variables in e */
@@ -380,11 +392,36 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       //SearchDecl
       //SearchCall1
       //SearchCall2
+      case Call(v1, args) if isValue(v1) =>
+        v1 match {
+          case Function(p, params, _, e1) => {
+            val pazip = params zip args
+            if (???) {
+              val e1p = pazip.foldRight(e1) {
+                ???
+              }
+              p match {
+                case None => ???
+                case Some(x1) => ???
+              }
+            }
+            else {
+              val pazipp = mapFirst(pazip) {
+                ???
+              }
+              ???
+            }
+          }
+          case _ => throw StuckError(e)
+        }
 
       //SearchObject
       case Obj(fields) => {
-        val (fi, ei) = fields.find { case (_, ei) => !isValue(ei) }
-        Obj(extend(fields, fi, step(ei)))
+        val t = fields.find { case (_, ei) => !isValue(ei) }
+        t match {
+          case Some((fi, ei)) => Obj(extend(fields, fi, step(ei)))
+          case _ => throw StuckError(e)
+        }
       }
 
       //SearchGetFields

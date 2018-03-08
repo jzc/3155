@@ -26,19 +26,22 @@ parse("function (f: (y: number) => number, x: number) { return f(x) }")
 parse("{ f: 0, g: true }")
 parse("x.f")
 
-val l1 = List(1, 2, 2, 3, 3, 3)
-compressRec(l1)
-treeFromList(List(1,2))
-
-val c = 1
-val (acc, prev) = (true, Some(2))
+step(parse ("{f:3}.f"))
 
 
-strictlyOrdered(treeFromList(List(1,1,2)))
-
-strictlyOrdered(treeFromList(List(1,2)))
-
-parse("''")
+//val l1 = List(1, 2, 2, 3, 3, 3)
+//compressRec(l1)
+//treeFromList(List(1,2))
+//
+//val c = 1
+//val (acc, prev) = (true, Some(2))
+//
+//
+//strictlyOrdered(treeFromList(List(1,1,2)))
+//
+//strictlyOrdered(treeFromList(List(1,2)))
+//
+//parse("''")
 
 
 //List(("a",1),("b",2)).foldLeft(empty[Int]){(a, v) =>
@@ -47,15 +50,27 @@ parse("''")
 //}
 //
 //MTyp(MConst, TNumber).t
-
-parse("()=>1")
-
-List() == Nil
-
-Map(("a",N(1)), ("b", N(2)), ("c", Binary(Plus,N(3),N(2)))).find { case (_, ei) => !isValue(ei) }
-
-//typeof(empty, Binary(Le, N(1), N(2)))
 //
+//parse("()=>1")
+//
+//List() == Nil
+//
+//Map(("a",N(1)), ("b", N(2)), ("c", Binary(Plus,N(3),N(2)))).find { case (_, ei) => !isValue(ei) }
+//
+////typeof(empty, Binary(Le, N(1), N(2)))
+////
 //val f:MTyp=>Typ = { case MTyp(_,t) => t }; f(MTyp(MConst, TNumber))
+//
+//
+//val g:MTyp=>Typ = t => t match { case MTyp(_,t) => t }
+//
+//val h:((Int, Int), Int)=>Int = t => {
+//  val ((e1, e2), e3) = t
+//  e1+e2+e3
+//}
+//
+//val k:((Int, Int), Int)=>Int = { case ((e1, e2), e3) => e1+e2+e3 }
+//def f(x:Int) = if (x==0) 0 else x*f(x-1)
 
+step(parse ("{f:3}.f"))
 
