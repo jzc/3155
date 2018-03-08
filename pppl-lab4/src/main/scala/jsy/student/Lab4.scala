@@ -221,7 +221,10 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
 
   /* This should be the same code as from Lab 3 */
   def iterate(e0: Expr)(next: (Expr, Int) => Option[Expr]): Expr = {
-    def loop(e: Expr, n: Int): Expr = ???
+    def loop(e: Expr, n: Int): Expr = next(e, n) match {
+      case None => e
+      case Some(ep) => loop(ep, n+1)
+    }
     loop(e0, 0)
   }
 
@@ -297,42 +300,131 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
     require(!isValue(e), s"step: e ${e} to step is a value")
     e match {
       /* Base Cases: Do Rules */
+      //DoPrint
       case Print(v1) if isValue(v1) => println(pretty(v1)); Undefined
-        /***** Cases needing adapting from Lab 3. */
-      case Unary(Neg, v1) if isValue(v1) => ???
-        /***** More cases here */
-      case Call(v1, args) if isValue(v1) =>
-        v1 match {
-          case Function(p, params, _, e1) => {
-            val pazip = params zip args
-            if (???) {
-              val e1p = pazip.foldRight(e1) {
-                ???
-              }
-              p match {
-                case None => ???
-                case Some(x1) => ???
-              }
-            }
-            else {
-              val pazipp = mapFirst(pazip) {
-                ???
-              }
-              ???
-            }
-          }
-          case _ => throw StuckError(e)
-        }
-        /***** New cases for Lab 4. */
+
+      //DoNeg
+      case Unary(Neg, N(n1)) => N(-n1)
+
+      //DoNot
+      case Unary(Not, B(b1)) => B(!b1)
+
+      //DoSeq
+      case Binary(Seq, v1, e2) if isValue(v1) => e2
+
+      //DoArith
+      case Binary(Plus , N(n1), N(n2)) => N(n1 + n2)
+      case Binary(Minus, N(n1), N(n2)) => N(n1 - n2)
+      case Binary(Times, N(n1), N(n2)) => N(n1 * n2)
+      case Binary(Div  , N(n1), N(n2)) => N(n1 / n2)
+
+      //DoPlusString
+      case Binary(Plus, S(s1), S(s2)) => S(s1 + s2)
+
+      //DoInequalityNumber
+      case Binary(Lt, N(n1), N(n2)) => B(n1 <  n2)
+      case Binary(Le, N(n1), N(n2)) => B(n1 <= n2)
+      case Binary(Gt, N(n1), N(n2)) => B(n1 >  n2)
+      case Binary(Ge, N(n1), N(n2)) => B(n1 >= n2)
+
+      //DoInequalityString
+      case Binary(Lt, S(s1), S(s2)) => B(s1 <  s2)
+      case Binary(Le, S(s1), S(s2)) => B(s1 <= s2)
+      case Binary(Gt, S(s1), S(s2)) => B(s1 >  s2)
+      case Binary(Ge, S(s1), S(s2)) => B(s1 >= s2)
+
+      //DoEquality
+      case Binary(Eq, v1, v2) if isValue(v1) && isValue(v2) => B(v1 == v2)
+      case Binary(Ne, v1, v2) if isValue(v1) && isValue(v2) => B(v1 != v2)
+
+      //DoAndTrue
+      case Binary(And, B(true), e2) => e2
+
+      //DoAndFalse
+      case Binary(And, B(false), e2) => B(false)
+
+      //DoOrTrue
+      case Binary(Or, B(true), e2) => B(true)
+
+      //DoOrFalse
+      case Binary(Or, B(false), e2) => e2
+
+      //DoIfTrue
+      case If(B(true), e2, _) => e2
+
+      //DoIfFalse
+      case If(B(false), _, e3) => e3
+
+      //DoDecl
+      //DoCall
+      //DoCallRec
+
+      //DoGetField
+      case GetField(Obj(fields), f) => fields(f)
+
+      //SearchUnary
+      case Unary(uop, e1) => Unary(uop, step(e1))
+
+      //SearchBinary2
+      case Binary(bop, v1, e2) if isValue(v1) => Binary(bop, v1, step(e2))
+
+      //SearchBinary1
+      case Binary(bop, e1, e2) => Binary(bop, step(e1), e2)
+
+      //SearchPrint
+      case Print(e1) => Print(step(e1))
+
+      //SearchIf
+      case If(e1, e2, e3) => If(step(e1), e2, e3)
+
+      //SearchDecl
+      //SearchCall1
+      //SearchCall2
+
+      //SearchObject
+      case Obj(fields) => {
+        val (fi, ei) = fields.find { case (_, ei) => !isValue(ei) }
+        Obj(extend(fields, fi, step(ei)))
+      }
+
+      //SearchGetFields
+      case GetField(e1, f) => GetField(step(e1), f)
+
+      //        /***** Cases needing adapting from Lab 3. */
+//      case Unary(Neg, v1) if isValue(v1) => ???
+//        /***** More cases here */
+//      case Call(v1, args) if isValue(v1) =>
+//        v1 match {
+//          case Function(p, params, _, e1) => {
+//            val pazip = params zip args
+//            if (???) {
+//              val e1p = pazip.foldRight(e1) {
+//                ???
+//              }
+//              p match {
+//                case None => ???
+//                case Some(x1) => ???
+//              }
+//            }
+//            else {
+//              val pazipp = mapFirst(pazip) {
+//                ???
+//              }
+//              ???
+//            }
+//          }
+//          case _ => throw StuckError(e)
+//        }
+//        /***** New cases for Lab 4. */
 
       /* Inductive Cases: Search Rules */
-      case Print(e1) => Print(step(e1))
+//      case Print(e1) => Print(step(e1))
         /***** Cases from Lab 3. */
-      case Unary(uop, e1) => ???
+//      case Unary(uop, e1) => ???
         /***** More cases here */
         /***** Cases needing adapting from Lab 3 */
-      case Call(v1 @ Function(_, _, _, _), args) => ???
-      case Call(e1, args) => ???
+//      case Call(v1 @ Function(_, _, _, _), args) => ???
+//      case Call(e1, args) => ???
         /***** New cases for Lab 4. */
 
       /* Everything else is a stuck error. Should not happen if e is well-typed.

@@ -52,8 +52,10 @@ parse("()=>1")
 
 List() == Nil
 
-Map(("a",1), ("b", 2), ("c", 3)).mapValues(_*2)
+Map(("a",N(1)), ("b", N(2)), ("c", Binary(Plus,N(3),N(2)))).find { case (_, ei) => !isValue(ei) }
 
-typeof(empty, Binary(Le, N(1), N(2)))
+//typeof(empty, Binary(Le, N(1), N(2)))
+//
+//val f:MTyp=>Typ = { case MTyp(_,t) => t }; f(MTyp(MConst, TNumber))
 
-val f:MTyp=>Typ = { case MTyp(_,t) => t }; f(MTyp(MConst, TNumber))
+
