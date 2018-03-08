@@ -116,10 +116,20 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
     }
 
     "TypeNot" should "perform TypeNot" in {
-
+      bools.foreach(e1 => {
+        assertResult(TBool) {
+          typeof(empty, Unary(Not, e1))
+        }
+      })
     }
 
-    it should "throw ste if e1 is not bool"
+    it should "throw ste if e1 is not bool" in {
+      numbers.foreach(e1 => {
+        intercept[StaticTypeError] {
+          typeof(empty, Unary(Not, e1))
+        }
+      })
+    }
 
     "TypeSeq" should "perform TypeSeq" in {
 
@@ -162,7 +172,20 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       })
     }
 
-    it should "throw ste if e1 and e2 are not string"
+    it should "throw ste if e1 and e2 are not string" in {
+      intercept[StaticTypeError] {
+        typeof(empty, Binary(Plus, N(1), S("2")))
+      }
+      intercept[StaticTypeError] {
+        typeof(empty, Binary(Plus, N(1), B(false)))
+      }
+      intercept[StaticTypeError] {
+        typeof(empty, Binary(Plus, N(1), Undefined))
+      }
+      intercept[StaticTypeError] {
+        typeof(empty, Binary(Plus, B(false), B(true)))
+      }
+    }
 
     "TypeInequalityNumber" should "perform TypeInequalityNumber" in {
       numbers.zip(numbers).foreach(t => {
@@ -175,7 +198,11 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       })
     }
 
-    it should "throw ste if e1 and e2 are not number"
+    it should "throw ste if e1 and e2 are not number" in {
+      intercept[StaticTypeError] {
+        typeof(empty, Binary(Le, N(1), B(false)))
+      }
+    }
 
     "TypeInequalityString" should "perform TypeInequalityString" in {
       strings.zip(strings).foreach(t => {
@@ -188,7 +215,11 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       })
     }
 
-    it should "throw ste if e1 and e2 are not string"
+    it should "throw ste if e1 and e2 are not string" in {
+      intercept[StaticTypeError] {
+        typeof(empty, Binary(Le, S("hello"),B(false)))
+      }
+    }
 
     "TypeEquality" should "perform TypeEquality" in {
       notfuncs.zip(notfuncs).foreach(t => {
@@ -202,7 +233,20 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
     }
 
     it should "throw ste when there is a function types" in {
-
+      intercept[StaticTypeError] {
+        typeof(empty, Binary(Eq,
+          Function(None, Nil, None, N(1)),
+          N(1))
+        )
+      }
+      intercept[StaticTypeError] {
+        typeof(empty, Binary(Eq,
+          Obj(Map(
+            ("x", Function(None, Nil, None, N(1)))
+          )),
+          N(1)
+        ))
+      }
     }
 
     "TypeAndOr" should "perform TypeAndOr" in {
