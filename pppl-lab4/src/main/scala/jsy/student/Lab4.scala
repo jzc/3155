@@ -253,9 +253,9 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case GetField(e1, f) => GetField(subst(e1), f)
     }
 
-//    val fvs = freeVars(???)
-//    def fresh(x: String): String = if (???) fresh(x + "$") else x
-    subst(e)
+    val fvs = freeVars(esub)
+    def fresh(x: String): String = if (fvs contains x) fresh(x + "$") else x
+    subst(rename(e)(fresh))
   }
 
   /* Rename bound variables in e */
@@ -265,31 +265,41 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         case N(_) | B(_) | Undefined | S(_) => e
         case Print(e1) => Print(ren(env, e1))
 
-        case Unary(uop, e1) => ???
-        case Binary(bop, e1, e2) => ???
-        case If(e1, e2, e3) => ???
+        case Unary(uop, e1) => Unary(uop, ren(env, e1))
+        case Binary(bop, e1, e2) => Binary(bop, ren(env, e1), ren(env, e2))
+        case If(e1, e2, e3) => If(ren(env, e1), ren(env, e2), ren(env, e3))
 
-        case Var(y) =>
-          ???
-        case Decl(mode, y, e1, e2) =>
+        case Var(y) => Var(env.get(y) match {
+          case None => y
+          case Some(yp) => yp
+        })
+
+        case Decl(mode, y, e1, e2) => {
           val yp = fresh(y)
-          ???
+          Decl(mode, yp, e1, ren(extend(env, y, yp), e2))
+        }
 
         case Function(p, params, retty, e1) => {
           val (pp, envp): (Option[String], Map[String,String]) = p match {
-            case None => ???
-            case Some(x) => ???
+            case None => (p, env)
+            case Some(p) => {
+              val pp = fresh(p)
+              (Some(pp), extend(env, p, pp))
+            }
           }
           val (paramsp, envpp) = params.foldRight( (Nil: List[(String,MTyp)], envp) ) {
-            ???
+            case ((xi, mt), (paramsi, envi)) => {
+              val xip = fresh(xi)
+              ((xip, mt) :: paramsi, extend(envi, xi, xip))
+            }
           }
-          ???
+          Function(pp, paramsp, retty, ren(envpp, e1))
         }
 
-        case Call(e1, args) => ???
+        case Call(e1, args) => Call(ren(env, e1), args.map(ei => ren(env, ei)))
 
-        case Obj(fields) => ???
-        case GetField(e1, f) => ???
+        case Obj(fields) => Obj(fields.mapValues(ei => ren(env, ei)))
+        case GetField(e1, f) => GetField(ren(env, e1), f)
       }
     }
     ren(empty, e)

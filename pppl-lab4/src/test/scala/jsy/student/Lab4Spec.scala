@@ -446,6 +446,12 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       }
     }
 
+    it should "rename bound variables that conflict with free variables in the substitution expression" in {
+      assertResult(Decl(MConst, "a$", N(1), Binary(Plus, Var("a$"), Binary(Plus, Var("a"), N(2))))) {
+        substitute(Decl(MConst, "a", N(1), Binary(Plus, Var("a"), Var("b"))), Binary(Plus, Var("a"), N(2)), "b")
+      }
+    }
+
     it should "substitute into all obj fields" in {
       assertResult(Obj(Map(
         ("a", N(1)),
@@ -483,9 +489,9 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       }
     }
 
-    "thing" should "work" in {
-      typeof(empty, parse("const n = 1;\n(function f(n: number): number { return n === 0 ? 0 : f(n - 1) })(1)"))
-    }
+//    "thing" should "work" in {
+//      typeof(empty, parse("const n = 1;\n(function f(n: number): number { return n === 0 ? 0 : f(n - 1) })(1)"))
+//    }
 
   }
 

@@ -28,8 +28,9 @@ parse("x.f")
 
 typeof(empty, parse("const n = 1;\n(function f(n: number): number { return n === 0 ? 0 : f(n - 1) })(1)"))
 
-val e = step(parse ("{f:3}.f"))
-e
+extend(empty, "a", "b")
+
+(1,2) :: (3,4) :: Nil
 
 //val l1 = List(1, 2, 2, 3, 3, 3)
 //compressRec(l1)
