@@ -26,8 +26,10 @@ parse("function (f: (y: number) => number, x: number) { return f(x) }")
 parse("{ f: 0, g: true }")
 parse("x.f")
 
-step(parse ("{f:3}.f"))
+typeof(empty, parse("const n = 1;\n(function f(n: number): number { return n === 0 ? 0 : f(n - 1) })(1)"))
 
+val e = step(parse ("{f:3}.f"))
+e
 
 //val l1 = List(1, 2, 2, 3, 3, 3)
 //compressRec(l1)

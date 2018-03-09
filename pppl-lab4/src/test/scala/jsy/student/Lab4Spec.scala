@@ -330,17 +330,9 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       }
     }
 
-    "TypeFunctinon" should "throw ste if no type annotation and named" in {
+    "TypeFunction" should "throw ste if no type annotation and named" in {
       intercept[StaticTypeError] {
         typeof(empty, Function(Some("f"), Nil, None, N(1)))
-      }
-    }
-
-    it should "bind the parameters correctly" in {
-      val params = List(("a",MTyp(MConst, TNumber)), ("b", MTyp(MName, TString)))
-      val correct = Map(("a", TNumber), ("b", TString))
-      assertResult(correct) {
-        Lab4.bindParams(params, empty)
       }
     }
 
@@ -362,6 +354,12 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
     it should "perform TypeFunction" in {
       assertResult(TFunction(Nil, TNumber)) {
         typeof(empty, Function(None, Nil, Some(TNumber), N(1)))
+      }
+    }
+
+    it should "infer the type of a recursive function" in {
+      assertResult(TFunction(List(("x",MTyp(MConst, TNumber))), TNumber)) {
+        typeof(empty, parse("function f(x: number):number { return x === 0 ? 1 : x*f(x-1) }"))
       }
     }
 
@@ -473,6 +471,21 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
     }
 
     // Probably want to write some more tests for typeInfer, substitute, and step.
+
+    "DoCall" should "perform DoCall" in {
+      assertResult(Binary(Plus, N(1), N(2))) {
+        step(Call(
+          Function(None, List(
+            ("x", MTyp(MConst, TNumber)),
+            ("y", MTyp(MConst, TNumber))
+          ), None, Binary(Plus, Var("x"), Var("y"))), List(N(1), N(2))
+        ))
+      }
+    }
+
+    "thing" should "work" in {
+      typeof(empty, parse("const n = 1;\n(function f(n: number): number { return n === 0 ? 0 : f(n - 1) })(1)"))
+    }
 
   }
 

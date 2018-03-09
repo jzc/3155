@@ -95,13 +95,6 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
     case _ => false
   }
 
-  def bindParams(params: List[(String, MTyp)], init: TEnv): TEnv =
-    params.foldLeft(init) { case (acc, (x, MTyp(_, t))) => extend(acc, x, t) }
-  //    params.foldLeft(init)((acc, t) => {
-//      val (x, mtyp) = t
-//      extend(acc, x, mtyp.t)
-//    })
-
   def typeof(env: TEnv, e: Expr): Typ = {
     def err[T](tgot: Typ, e1: Expr): T = throw StaticTypeError(tgot, e1, e)
 
@@ -162,11 +155,11 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         val env1 = (p, tann) match {
           /***** Add cases here *****/
           case (None, _) => env
-          case (Some(p), Some(tann)) => extend(env, p, tann)
+          case (Some(p), Some(tann)) => extend(env, p, TFunction(params, tann))
           case _ => err(TUndefined, e1)
         }
         // Bind to env2 an environment that extends env1 with bindings for params.
-        val env2 = bindParams(params, env1)
+        val env2 = params.foldLeft(env1) { case (acc, (x, MTyp(_, t))) => extend(acc, x, t) }
         // Infer the type of the function body
         val t1 = typeof(env2, e1)
         // Check with the possibly annotated return type
@@ -304,8 +297,8 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
 
   /* Check whether or not an expression is reduced enough to be applied given a mode. */
   def isRedex(mode: Mode, e: Expr): Boolean = mode match {
-    case MConst => ???
-    case MName => ???
+    case MConst => !isValue(e)
+    case MName => false
   }
 
   def step(e: Expr): Expr = {
@@ -368,8 +361,13 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case If(B(false), _, e3) => e3
 
       //DoDecl
-      //DoCall
-      //DoCallRec
+      case Call(v @ Function(p, params, _, e1), args) if params.zip(args).forall { case ((_, MTyp(m, _)), ei) => !isRedex(m, ei) } =>
+        params.zip(args).foldLeft(p match {
+          //DoCall - substitute all in one step?
+          case None => e1
+          //DoCallRec
+          case Some(x) => substitute(e1, v, x)
+        }){ case (acc, ((xi, _), ei)) => substitute(acc, ei, xi) }
 
       //DoGetField
       case GetField(Obj(fields), f) => fields(f)
