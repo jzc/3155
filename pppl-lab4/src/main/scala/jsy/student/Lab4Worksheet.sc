@@ -77,3 +77,6 @@ extend(empty, "a", "b")
 
 step(parse ("{f:3}.f"))
 
+1 match {
+  case 2
+}
