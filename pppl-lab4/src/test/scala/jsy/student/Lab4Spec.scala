@@ -478,7 +478,7 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
 
     // Probably want to write some more tests for typeInfer, substitute, and step.
 
-    "DoCall" should "perform DoCall" in {
+    "SearchCall" should "perform SearchCall" in {
       assertResult(parse("((x:number, y:number, z:number)=>(x,y,z))(2,1+2,1+3)")) {
         step(parse("((x:number, y:number, z:number)=>(x,y,z))(1+1,1+2,1+3)"))
       }
@@ -488,6 +488,11 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
       assertResult(parse("((x:number, y:number, z:number)=>(x,y,z))(2,3,4)")) {
         step(parse("((x:number, y:number, z:number)=>(x,y,z))(2,3,1+3)"))
       }
+      assertResult(parse("((x:name number, y:number, z:name number)=>(x,y,z))(1+1,3,1+3)")) {
+        step(parse("((x:name number, y:number, z:name number)=>(x,y,z))(1+1,1+2,1+3)"))
+      }
+    }
+    "DoCall" should "perform DoCall" in {
       assertResult(parse("(2,3,4)")) {
         step(parse("((x:number, y:number, z:number)=>(x,y,z))(2,3,4)"))
       }

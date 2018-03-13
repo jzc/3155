@@ -33,15 +33,14 @@ import jsy.student.Lab4._
 //iterateStep(parse("((x: number, x:number)=> x)(1,2)"))
 
 
-val a:Option[Int] = None
-a match {
-  case Some(s) => 1
-  case _ => ()
-}
-
-
+//val a:Option[Int] = None
+//a match {
+//  case Some(s) => 1
+//  case _ =>
 //step(parse("((x:number, y:number, z:number)=>(x,y,z))(1+1,1+2,1+3)"))
 //extend(empty, "a", "b")
+
+parse("const a = 1;")
 
 (1,2) :: (3,4) :: Nil
 

@@ -176,12 +176,12 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
           case _ => err(TUndefined, e1)
         }
         // Bind to env2 an environment that extends env1 with bindings for params.
-        val env2 = params.foldLeft(env1) { case (acc, (x, MTyp(_, t))) => extend(acc, x, t) }
+        val env2 = env1 ++ params.map { case (m, MTyp(_, t)) => (m, t)}
         // Infer the type of the function body
         val t1 = typeof(env2, e1)
         // Check with the possibly annotated return type
         tann match {
-          case Some(tann) if tann != t1 => err(t1, e1)
+          case Some(tann) if tann != t1 => err(tann, e1)
           case _ => ()
         }
         TFunction(params, t1)
@@ -189,10 +189,9 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case Call(e1, args) => typeof(env, e1) match {
         case TFunction(params, tret) if params.length == args.length =>
           (params zip args).foreach {
-              case ((_, MTyp(_,p)), a) => {
+              case ((_, MTyp(_,pt)), a) =>
                 val at = typeof(env, a)
-                if (p != at) err(at, a)
-              }
+                if (pt != at) err(at, a)
           }
           tret
         case tgot => err(tgot, e1)
@@ -365,10 +364,10 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case Binary(And, B(true), e2) => e2
 
       //DoAndFalse
-      case Binary(And, B(false), e2) => B(false)
+      case Binary(And, B(false), _) => B(false)
 
       //DoOrTrue
-      case Binary(Or, B(true), e2) => B(true)
+      case Binary(Or, B(true), _) => B(true)
 
       //DoOrFalse
       case Binary(Or, B(false), e2) => e2
@@ -382,13 +381,8 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       //DoDecl
       case Decl(m, x, e1, e2) if !isRedex(m, e1) => substitute(e2, e1, x)
 
+      //DoCall
       case Call(v @ Function(p, params, _, e1), args) if params.zip(args).forall { case ((_, MTyp(m, _)), ei) => !isRedex(m, ei) } =>
-//        params.zip(args).foldRight(p match {
-//          //DoCall - substitute all in one step?
-//          case None => e1
-//          //DoCallRec
-//          case Some(x) => substitute(e1, v, x)
-//        }){ case (((xi, _), ei), acc) => substitute(acc, ei, xi) }
         val body = params.zip(args).foldRight(e1){ case (((xi, _), ei), acc) => substitute(acc, ei, xi) }
         p match {
           case None => body
@@ -429,12 +423,10 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       }).unzip._2)
 
       //SearchCall1
-      case Call(e1, _) => step(e1)
+      case Call(e1, args) => Call(step(e1), args)
 
       //SearchObject
-      case Obj(fields) =>
-        val t = fields.find { case (_, ei) => !isValue(ei) }
-        t match {
+      case Obj(fields) => fields.find { case (_, ei) => !isValue(ei) } match {
           case Some((fi, ei)) => Obj(extend(fields, fi, step(ei)))
           case _ => throw StuckError(e)
         }
