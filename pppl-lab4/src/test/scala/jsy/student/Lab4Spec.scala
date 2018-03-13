@@ -479,20 +479,22 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
     // Probably want to write some more tests for typeInfer, substitute, and step.
 
     "DoCall" should "perform DoCall" in {
-      assertResult(Binary(Plus, N(1), N(2))) {
-        step(Call(
-          Function(None, List(
-            ("x", MTyp(MConst, TNumber)),
-            ("y", MTyp(MConst, TNumber))
-          ), None, Binary(Plus, Var("x"), Var("y"))), List(N(1), N(2))
-        ))
+      assertResult(parse("((x:number, y:number, z:number)=>(x,y,z))(2,1+2,1+3)")) {
+        step(parse("((x:number, y:number, z:number)=>(x,y,z))(1+1,1+2,1+3)"))
+      }
+      assertResult(parse("((x:number, y:number, z:number)=>(x,y,z))(2,3,1+3)")) {
+        step(parse("((x:number, y:number, z:number)=>(x,y,z))(2,1+2,1+3)"))
+      }
+      assertResult(parse("((x:number, y:number, z:number)=>(x,y,z))(2,3,4)")) {
+        step(parse("((x:number, y:number, z:number)=>(x,y,z))(2,3,1+3)"))
+      }
+      assertResult(parse("(2,3,4)")) {
+        step(parse("((x:number, y:number, z:number)=>(x,y,z))(2,3,4)"))
+      }
+      assertResult(parse("(1+1,1+2,1+3)")) {
+        step(parse("((x:name number, y:name number, z:name number)=>(x,y,z))(1+1,1+2,1+3)"))
       }
     }
-
-//    "thing" should "work" in {
-//      typeof(empty, parse("const n = 1;\n(function f(n: number): number { return n === 0 ? 0 : f(n - 1) })(1)"))
-//    }
-
   }
 
 }

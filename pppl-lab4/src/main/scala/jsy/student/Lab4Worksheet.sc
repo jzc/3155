@@ -18,17 +18,30 @@ import jsy.student.Lab4._
 //val cr1 = compressRec(List(1, 2, 2, 3, 3, 3))
 
 // Parse functions with possibly multiple parameters and type annotations.
-parse("function fst(x: number, y: number): number { return x }")
-parse("function (x: number) { return x }")
-parse("function (f: (y: number) => number, x: number) { return f(x) }")
+//parse("function fst(x: number, y: number): number { return x }")
+//parse("function (x: number) { return x }")
+//parse("function (f: (y: number) => number, x: number) { return f(x) }")
+//
+//// Parse objects
+//parse("{ f: 0, g: true }")
+//parse("x.f")
+//
+//typeof(empty, parse("const n = 1;\n(function f(n: number): number { return n === 0 ? 0 : f(n - 1) })(1)"))
 
-// Parse objects
-parse("{ f: 0, g: true }")
-parse("x.f")
+//typeof(empty, parse("(x: number)=>x;")) == typeof(empty, parse("(y: number)=>y"))
 
-typeof(empty, parse("const n = 1;\n(function f(n: number): number { return n === 0 ? 0 : f(n - 1) })(1)"))
+//iterateStep(parse("((x: number, x:number)=> x)(1,2)"))
 
-extend(empty, "a", "b")
+
+val a:Option[Int] = None
+a match {
+  case Some(s) => 1
+  case _ => ()
+}
+
+
+//step(parse("((x:number, y:number, z:number)=>(x,y,z))(1+1,1+2,1+3)"))
+//extend(empty, "a", "b")
 
 (1,2) :: (3,4) :: Nil
 
@@ -74,9 +87,11 @@ extend(empty, "a", "b")
 //
 //val k:((Int, Int), Int)=>Int = { case ((e1, e2), e3) => e1+e2+e3 }
 //def f(x:Int) = if (x==0) 0 else x*f(x-1)
-
-step(parse ("{f:3}.f"))
-
-1 match {
-  case 2
-}
+//
+//step(parse ("{f:3}.f"))
+//
+//1 match {
+//  case 2
+//}
+//Call(Function(None,List((x,MTyp(MConst,TNumber)), (y,MTyp(MConst,TNumber)), (z,MTyp(MConst,TNumber))),None,Binary(Seq,Var(x),Binary(Seq,Var(y),Var(z)))),List(N(2.0), Binary(Plus,N(1.0),N(2.0)), Binary(Plus,N(1.0),N(3.0)))), but got
+//Call(Function(None,List((x,MTyp(MConst,TNumber)), (y,MTyp(MConst,TNumber)), (z,MTyp(MConst,TNumber))),None,Binary(Seq,Var(x),Binary(Seq,Var(y),Var(z)))),List(Binary(Plus,N(1.0),N(1.0)), Binary(Plus,N(1.0),N(2.0)), Binary(Plus,N(1.0),N(3.0))))

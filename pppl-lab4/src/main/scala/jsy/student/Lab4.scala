@@ -114,30 +114,48 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         case TBool => TBool
         case tgot => err(tgot, e1)
       }
-      case Binary(Plus, e1, e2) => (typeof(env, e1), typeof(env, e2)) match {
-        case (TNumber, TNumber) => TNumber
-        case (TString, TString) => TString
-        case (tgot, _) => err(tgot, e1)
+      case Binary(Plus, e1, e2) => typeof(env, e1) match {
+        case TNumber => typeof(env, e2) match {
+          case TNumber => TNumber
+          case tgot => err(tgot, e2)
+        }
+        case TString => typeof(env, e2) match {
+          case TString => TString
+          case tgot => err(tgot, e2)
+        }
+        case tgot => err(tgot, e1)
       }
-      case Binary(Minus|Times|Div, e1, e2) => (typeof(env, e1), typeof(env, e2)) match {
-        case (TNumber, TNumber) => TNumber
-        case (tgot, _) => err(tgot, e1)
+      case Binary(Minus|Times|Div, e1, e2) => typeof(env, e1) match {
+        case TNumber => typeof(env, e2) match {
+          case TNumber => TNumber
+          case tgot => err(tgot, e2)
+        }
+        case tgot => err(tgot, e1)
       }
-      case Binary(Eq|Ne, e1, e2) =>
-        val t1 = typeof(env, e1)
-        val t2 = typeof(env, e2)
-        if (t1 == t2 && !hasFunctionTyp(t1) && !hasFunctionTyp(t2))
-          TBool
-        else
-          err(t1, e1)
-
-      case Binary(Lt|Le|Gt|Ge, e1, e2) => (typeof(env, e1), typeof(env, e2)) match {
-        case (TNumber, TNumber) | (TString, TString) => TBool
-        case (_, tgot) => err(tgot, e2)
+      case Binary(Eq|Ne, e1, e2) => typeof(env, e1) match {
+        case t1 if !hasFunctionTyp(t1) => typeof(env, e2) match {
+          case t2 if !hasFunctionTyp(t2) && (t1 == t2) => TBool
+          case tgot => err(tgot, e2)
+        }
+        case tgot => err(tgot, e1)
       }
-      case Binary(And|Or, e1, e2) => (typeof(env, e1), typeof(env, e2)) match {
-        case (TBool, TBool) => TBool
-        case (_, tgot) => err(tgot, e2)
+      case Binary(Lt|Le|Gt|Ge, e1, e2) => typeof(env, e1) match {
+        case TNumber => typeof(env, e2) match {
+          case TNumber => TBool
+          case tgot => err(tgot, e2)
+        }
+        case TString => typeof(env, e2) match {
+          case TString => TBool
+          case tgot => err(tgot, e2)
+        }
+        case tgot => err(tgot, e1)
+      }
+      case Binary(And|Or, e1, e2) => typeof(env, e1) match {
+        case TBool => typeof(env, e2) match {
+          case TBool => TBool
+          case tgot => err(tgot, e2)
+        }
+        case tgot => err(tgot, e1)
       }
       case Binary(Seq, e1, e2) => typeof(env, e1); typeof(env, e2)
       case If(e1, e2, e3) => typeof(env, e1) match {
@@ -173,7 +191,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
           (params zip args).foreach {
               case ((_, MTyp(_,p)), a) => {
                 val at = typeof(env, a)
-                if (p != at) err(at, e1)
+                if (p != at) err(at, a)
               }
           }
           tret
@@ -202,14 +220,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
    *
    * This should the same code as from Lab 3.
    */
-  def inequalityVal(bop: Bop, v1: Expr, v2: Expr): Boolean = {
-    require(isValue(v1), s"inequalityVal: v1 ${v1} is not a value")
-    require(isValue(v2), s"inequalityVal: v2 ${v2} is not a value")
-    require(bop == Lt || bop == Le || bop == Gt || bop == Ge)
-    (v1, v2) match {
-      case _ => ??? // delete this line when done
-    }
-  }
+  def inequalityVal(bop: Bop, v1: Expr, v2: Expr): Boolean = ???
 
   /* This should be the same code as from Lab 3 */
   def iterate(e0: Expr)(next: (Expr, Int) => Option[Expr]): Expr = {
@@ -372,15 +383,23 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       case Decl(m, x, e1, e2) if !isRedex(m, e1) => substitute(e2, e1, x)
 
       case Call(v @ Function(p, params, _, e1), args) if params.zip(args).forall { case ((_, MTyp(m, _)), ei) => !isRedex(m, ei) } =>
-        params.zip(args).foldRight(p match {
-          //DoCall - substitute all in one step?
-          case None => e1
-          //DoCallRec
-          case Some(x) => substitute(e1, v, x)
-        }){ case (((xi, _), ei), acc) => substitute(acc, ei, xi) }
+//        params.zip(args).foldRight(p match {
+//          //DoCall - substitute all in one step?
+//          case None => e1
+//          //DoCallRec
+//          case Some(x) => substitute(e1, v, x)
+//        }){ case (((xi, _), ei), acc) => substitute(acc, ei, xi) }
+        val body = params.zip(args).foldRight(e1){ case (((xi, _), ei), acc) => substitute(acc, ei, xi) }
+        p match {
+          case None => body
+          case Some(x) => substitute(body, v, x)
+        }
 
       //DoGetField
-      case GetField(Obj(fields), f) => fields(f)
+      case GetField(Obj(fields), f) => fields.get(f) match {
+        case Some(f) => f
+        case _ => throw StuckError(e)
+      }
 
       //SearchUnary
       case Unary(uop, e1) => Unary(uop, step(e1))
@@ -400,7 +419,8 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
       //SearchDecl
       case Decl(m, x, e1, e2) => Decl(m, x, step(e1), e2)
 
-      case Call(f @ Function(p, params, tann, e1), args) => Call(f, mapFirst(params.zip(args))({
+      //SearchCall2
+      case Call(f @ Function(_, params, _, _), args) => Call(f, mapFirst(params.zip(args))({
         case (p @ (_, MTyp(mi, _)), ei) =>
           if (isRedex(mi, ei))
             Some((p, step(ei)))
@@ -418,7 +438,6 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
           case Some((fi, ei)) => Obj(extend(fields, fi, step(ei)))
           case _ => throw StuckError(e)
         }
-
 
       //SearchGetFields
       case GetField(e1, f) => GetField(step(e1), f)
