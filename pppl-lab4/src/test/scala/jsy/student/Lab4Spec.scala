@@ -500,6 +500,51 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
         step(parse("((x:name number, y:name number, z:name number)=>(x,y,z))(1+1,1+2,1+3)"))
       }
     }
+
+    "DoNot" should "perform DoNot" in {
+      assertResult(B(true)) {
+        step(Unary(Not, B(false)))
+      }
+    }
+
+    "SearchObject" should "perform SearchObject" in {
+      assertResult(parse("{a: 2, b:2+2}")) {
+        step(parse("{a: 1+1, b:2+2}"))
+      }
+    }
+
+    "SearchBinary" should "perform SearchBinary" in {
+      assertResult(parse("3+(3+4)")) {
+        step(parse("(1+2)+(3+4)"))
+      }
+      assertResult(parse("3+7")) {
+        step(parse("3+(3+4)"))
+      }
+    }
+
+    "SearchGetField" should "perform SearchGetField" in {
+      assertResult(parse("{a: 2}.a")) {
+        step(parse("{a:1+1}.a"))
+      }
+    }
+
+    "DoDecl" should "perform DoDecl" in {
+      assertResult(parse("1+1")) {
+        step(parse("name x = 1+1; x"))
+      }
+    }
+
+    "SearchDecl" should "perform SearchDecl" in {
+      assertResult(parse("const x = 2; x")) {
+        step(parse("const x = 1+1; x"))
+      }
+    }
+
+    "SearhcUnary" should "perform SearchUnary" in {
+      assertResult(parse("-1")) {
+        step(parse("-(2-1)"))
+      }
+    }
   }
 
 }

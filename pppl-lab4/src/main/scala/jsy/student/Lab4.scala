@@ -248,7 +248,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         /***** Cases needing adapting from Lab 3 */
       case Function(p, params, tann, e1) =>
         val bound = p match {
-          case Some(p) => p :: params.map { case (xi, _) => xi}
+          case Some(sp) => sp :: params.map { case (xi, _) => xi}
           case None => params.map { case (xi, _) => xi }
         }
         if (bound.contains(x))
@@ -285,7 +285,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
 
         case Decl(mode, y, e1, e2) =>
           val yp = fresh(y)
-          Decl(mode, yp, e1, ren(extend(env, y, yp), e2))
+          Decl(mode, yp, ren(env, e1), ren(extend(env, y, yp), e2))
 
 
         case Function(p, params, retty, e1) =>
@@ -390,7 +390,7 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
         }
 
       //DoGetField
-      case GetField(Obj(fields), f) => fields.get(f) match {
+      case GetField(v @ Obj(fields), f) if isValue(v) => fields.get(f) match {
         case Some(f) => f
         case _ => throw StuckError(e)
       }

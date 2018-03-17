@@ -40,9 +40,8 @@ import jsy.student.Lab4._
 //step(parse("((x:number, y:number, z:number)=>(x,y,z))(1+1,1+2,1+3)"))
 //extend(empty, "a", "b")
 
-parse("const a = 1;")
-
-(1,2) :: (3,4) :: Nil
+Map("a"->1, "b"->2).find{ case (_, i) => i==1}
+parse("{a: 1+1, b:2+2}")
 
 //val l1 = List(1, 2, 2, 3, 3, 3)
 //compressRec(l1)
