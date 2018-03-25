@@ -8,9 +8,9 @@ object Lab4 extends jsy.util.JsyApplication with Lab4Like {
   
   /*
    * CSCI 3155: Lab 4
-   * <Your Name>
+   * Justin Cai
    * 
-   * Partner: <Your Partner's Name>
+   * Partner: Thomas Langsfeld
    * Collaborators: <Any Collaborators>
    */
 

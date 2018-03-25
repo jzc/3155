@@ -181,7 +181,7 @@ class Lab4Spec(lab4: Lab4Like) extends FlatSpec {
     }
 
     it should "throw ste if e1 and e2 are not string" in {
-      intercept[StaticTypeError] {
+      val e = intercept[StaticTypeError] {
         typeof(empty, Binary(Plus, N(1), S("2")))
       }
       intercept[StaticTypeError] {
