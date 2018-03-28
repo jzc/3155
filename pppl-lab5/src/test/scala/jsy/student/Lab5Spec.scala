@@ -81,6 +81,36 @@ class Lab5Spec(lab5: Lab5Like) extends FlatSpec {
     }
   }
 
+  "DoPlus" should "perform DoPlus" in {
+    assertResult(N(2)) {
+      step(parse("1+1"))(memempty)._2
+    }
+  }
+
+  "DoObject" should "perform DoObject" in {
+    val (mem, r) = step(parse("{a:1}"))(memempty)
+    assertResult(A(1)) { r }
+    assertResult(parse("{a:1}")) { mem(A(1)) }
+  }
+
+  "DoGetField" should "perform DoGetField" in {
+    assertResult(N(1)) {
+      step(GetField(A(1), "a"))(memempty + (A(1),parse("{a:1}")))._2
+    }
+  }
+
+  "SearchObj" should "perform SearchObject" in {
+    assertResult(Obj(Map("a"->N(2)))) {
+      step(parse("{a:1+1}"))(memempty)._2
+    }
+  }
+
+  "SearchGetField" should "perform SearchGetField" in {
+    val (mem, r) = step(parse("{a:1}.a"))(memempty)
+    assertResult(GetField(A(1), "a")) { r }
+    assertResult(mem(A(1))) { parse("{a:1}") }
+  }
+
   // Probably want to write some tests for castOk, typeInfer, substitute, and step.
 
 }

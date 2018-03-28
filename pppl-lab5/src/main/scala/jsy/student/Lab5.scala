@@ -363,7 +363,11 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
   }
 
   /* Check whether or not an expression is reduced enough to be applied given a mode. */
-  def isRedex(mode: Mode, e: Expr): Boolean = ???
+  def isRedex(mode: Mode, e: Expr): Boolean = mode match {
+    case MConst | MVar if !isValue(e) => true
+    case MRef if !isLValue(e) => true
+    case _ => false
+  }
 
   def getBinding(mode: Mode, e: Expr): DoWith[Mem,Expr] = {
     require(!isRedex(mode,e), s"expression ${e} must not reducible under mode ${mode}")
@@ -374,79 +378,153 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
   def step(e: Expr): DoWith[Mem, Expr] = {
     require(!isValue(e), "stepping on a value: %s".format(e))
     e match {
-      /* Base Cases: Do Rules */
+      //DoNeg
+      case Unary(Neg, N(n)) => doreturn(N(-n))
+
+      //DoNot
+      case Unary(Not, B(b)) => doreturn(B(!b))
+
+      //DoSeq
+      case Binary(Seq, v1, e2) if isValue(v1) => doreturn(e2)
+
+      //DoArith
+      case Binary(Plus , N(n1), N(n2)) => doreturn(N(n1 + n2))
+      case Binary(Minus, N(n1), N(n2)) => doreturn(N(n1 - n2))
+      case Binary(Times, N(n1), N(n2)) => doreturn(N(n1 * n2))
+      case Binary(Div  , N(n1), N(n2)) => doreturn(N(n1 / n2))
+
+      //DoPlusString
+      case Binary(Plus, S(s1), S(s2)) => doreturn(S(s1 + s2))
+
+      //DoInequalityNumber
+      case Binary(Lt, N(n1), N(n2)) => doreturn(B(n1 <  n2))
+      case Binary(Le, N(n1), N(n2)) => doreturn(B(n1 <= n2))
+      case Binary(Gt, N(n1), N(n2)) => doreturn(B(n1 >  n2))
+      case Binary(Ge, N(n1), N(n2)) => doreturn(B(n1 >= n2))
+
+      //DoInequalityNumber
+      case Binary(Lt, S(s1), S(s2)) => doreturn(B(s1 <  s2))
+      case Binary(Le, S(s1), S(s2)) => doreturn(B(s1 <= s2))
+      case Binary(Gt, S(s1), S(s2)) => doreturn(B(s1 >  s2))
+      case Binary(Ge, S(s1), S(s2)) => doreturn(B(s1 >= s2))
+
+      //DoEquality
+      case Binary(Eq, v1, v2) if isValue(v1) && isValue(v2) => doreturn(B(v1 == v2))
+      case Binary(Ne, v1, v2) if isValue(v1) && isValue(v2) => doreturn(B(v1 != v2))
+
+      //DoAndTrue
+      case Binary(And, B(true), e2) => doreturn(e2)
+
+      //DoAndFalse
+      case Binary(And, B(false), _) => doreturn(B(false))
+
+      //DoOrTrue
+      case Binary(Or, B(true), _) => doreturn(B(true))
+
+      //DoOrFalse
+      case Binary(Or, B(false), e2) => doreturn(e2)
+
+      //DoPrint
       case Print(v1) if isValue(v1) => doget map { m => println(pretty(m, v1)); Undefined }
-        /***** Cases needing adapting from Lab 3. */
-      case Unary(Neg, N(n1)) => doreturn(N(-n1)) //if isValue(v1) => doreturn(-v1)
-        /***** More cases here */
-        /***** Cases needing adapting from Lab 4. */
-      case Obj(fields) if (fields forall { case (_, vi) => isValue(vi)}) =>
-        ???
-      case GetField(a @ A(_), f) =>
-        ???
 
-      case Decl(MConst, x, v1, e2) if isValue(v1) =>
-        ???
-      case Decl(MVar, x, v1, e2) if isValue(v1) =>
-        ???
+      //DoIfTrue
+      case If(B(true), e2, _) => doreturn(e2)
 
-        /***** New cases for Lab 5. */
-      case Unary(Deref, a @ A(_)) =>
-        ???
+      //DoIfFalse
+      case If(B(false), _, e3) => doreturn(e3)
 
-      case Assign(Unary(Deref, a @ A(_)), v) if isValue(v) =>
-        domodify[Mem] { m => ??? } map { _ => ??? }
+      //DoObject
+      case Obj(fields) if fields.forall { case (_, vi) => isValue(vi) } => memalloc(Obj(fields))
 
-      case Assign(GetField(a @ A(_), f), v) if isValue(v) =>
-        ???
+      //DoGetField
+      case GetField(a @ A(_), f) => doget map { mem => mem(a) match {
+        case Obj(fields) => fields(f)
+        case _ => throw StuckError(e)
+      } }
 
-      case Call(v @ Function(p, params, _, e), args) => {
-        val pazip = params zip args
-        if (???) {
-          val dwep = pazip.foldRight( ??? : DoWith[Mem,Expr] )  {
-            case (((xi, MTyp(mi, _)), ei), dwacc) => ???
-          }
-          p match {
-            case None => ???
-            case Some(x) => ???
-          }
-        }
-        else {
-          val dwpazipp = mapFirstWith(pazip) {
-            ???
-          }
-          ???
-        }
+      //SearchObject
+      case Obj(fields) => fields.find { case (_, ei) => !isValue(ei) } match {
+        case Some((fi,ei)) => step(ei) map { eip => Obj(fields + (fi->eip))}
+        case _ => throw StuckError(e)
       }
 
-      /* Base Cases: Error Rules */
-        /***** Replace the following case with a case to throw NullDeferenceError.  */
-      //case _ => throw NullDeferenceError(e)
+      //SearchObject
+      case GetField(e1, f) => step(e1) map { e1p => GetField(e1p, f) }
 
-      /* Inductive Cases: Search Rules */
-        /***** Cases needing adapting from Lab 3. Make sure to replace the case _ => ???. */
-      case Print(e1) => step(e1) map { e1p => Print(e1p) }
-      case Unary(uop, e1) =>
-        ???
-        /***** Cases needing adapting from Lab 4 */
-      case GetField(e1, f) =>
-        ???
-      case Obj(fields) =>
-        ???
 
-      case Decl(mode, x, e1, e2) =>
-        ???
-      case Call(e1, args) =>
-        ???
-
-        /***** New cases for Lab 5.  */
-      case Assign(e1, e2) if ??? =>
-        ???
-      case Assign(e1, e2) =>
-        ???
-
-      /* Everything else is a stuck error. */
-      case _ => throw StuckError(e)
+      /* Base Cases: Do Rules */
+//      case Print(v1) if isValue(v1) => doget map { m => println(pretty(m, v1)); Undefined }
+//        /***** Cases needing adapting from Lab 3. */
+//      case Unary(Neg, N(n1)) => doreturn(N(-n1)) //if isValue(v1) => doreturn(-v1)
+//        /***** More cases here */
+//        /***** Cases needing adapting from Lab 4. */
+//      case Obj(fields) if (fields forall { case (_, vi) => isValue(vi)}) =>
+//        ???
+//      case GetField(a @ A(_), f) =>
+//        ???
+//
+//      case Decl(MConst, x, v1, e2) if isValue(v1) =>
+//        ???
+//      case Decl(MVar, x, v1, e2) if isValue(v1) =>
+//        ???
+//
+//        /***** New cases for Lab 5. */
+//      case Unary(Deref, a @ A(_)) =>
+//        ???
+//
+//      case Assign(Unary(Deref, a @ A(_)), v) if isValue(v) =>
+//        domodify[Mem] { m => ??? } map { _ => ??? }
+//
+//      case Assign(GetField(a @ A(_), f), v) if isValue(v) =>
+//        ???
+//
+//      case Call(v @ Function(p, params, _, e), args) => {
+//        val pazip = params zip args
+//        if (???) {
+//          val dwep = pazip.foldRight( ??? : DoWith[Mem,Expr] )  {
+//            case (((xi, MTyp(mi, _)), ei), dwacc) => ???
+//          }
+//          p match {
+//            case None => ???
+//            case Some(x) => ???
+//          }
+//        }
+//        else {
+//          val dwpazipp = mapFirstWith(pazip) {
+//            ???
+//          }
+//          ???
+//        }
+//      }
+//
+//      /* Base Cases: Error Rules */
+//        /***** Replace the following case with a case to throw NullDeferenceError.  */
+//      //case _ => throw NullDeferenceError(e)
+//
+//      /* Inductive Cases: Search Rules */
+//        /***** Cases needing adapting from Lab 3. Make sure to replace the case _ => ???. */
+//      case Print(e1) => step(e1) map { e1p => Print(e1p) }
+//      case Unary(uop, e1) =>
+//        ???
+//        /***** Cases needing adapting from Lab 4 */
+//      case GetField(e1, f) =>
+//        ???
+//      case Obj(fields) =>
+//        ???
+//
+//      case Decl(mode, x, e1, e2) =>
+//        ???
+//      case Call(e1, args) =>
+//        ???
+//
+//        /***** New cases for Lab 5.  */
+//      case Assign(e1, e2) if ??? =>
+//        ???
+//      case Assign(e1, e2) =>
+//        ???
+//
+//      /* Everything else is a stuck error. */
+//      case _ => throw StuckError(e)
     }
   }
 
