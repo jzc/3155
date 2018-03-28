@@ -129,7 +129,11 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
 
   def castOk(t1: Typ, t2: Typ): Boolean = (t1, t2) match {
       /***** Make sure to replace the case _ => ???. */
-    //case _ => ???
+    case (t1, t2) if t1 == t2 => true
+    case (TNull, TObj(_)) => true
+    case (TObj(tf1), TObj(tf2)) =>
+      val (small, large) = if (tf1.size <= tf2.size) (tf1, tf2) else (tf2, tf1)
+      small.forall { case (fi, ti) => (large contains fi) && (large(fi) == ti) }
       /***** Cases for the extra credit. Do not attempt until the rest of the assignment is complete. */
     case (TInterface(tvar, t1p), _) => ???
     case (_, TInterface(tvar, t2p)) => ???
@@ -148,7 +152,10 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
     case _ => false
   }
 
-  def isBindex(m: Mode, e: Expr): Boolean = ???
+  def isBindex(m: Mode, e: Expr): Boolean = m match {
+    case MConst | MName | MVar => true
+    case MRef => isLExpr(e)
+  }
 
   def typeof(env: TEnv, e: Expr): Typ = {
     def err[T](tgot: Typ, e1: Expr): T = throw StaticTypeError(tgot, e1, e)
@@ -159,76 +166,139 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
       case B(_) => TBool
       case Undefined => TUndefined
       case S(_) => TString
-      case Var(x) => ???
+      case Var(x) => env(x).t
       case Unary(Neg, e1) => typeof(env, e1) match {
         case TNumber => TNumber
         case tgot => err(tgot, e1)
       }
         /***** Cases directly from Lab 4. We will minimize the test of these cases in Lab 5. */
-      case Unary(Not, e1) =>
-        ???
-      case Binary(Plus, e1, e2) =>
-        ???
-      case Binary(Minus|Times|Div, e1, e2) =>
-        ???
-      case Binary(Eq|Ne, e1, e2) =>
-        ???
-      case Binary(Lt|Le|Gt|Ge, e1, e2) =>
-        ???
-      case Binary(And|Or, e1, e2) =>
-        ???
-      case Binary(Seq, e1, e2) =>
-        ???
-      case If(e1, e2, e3) =>
-        ???
+      case Unary(Not, e1) => typeof(env, e1) match {
+        case TBool => TBool
+        case tgot => err(tgot, e1)
+      }
+      case Binary(Plus, e1, e2) => typeof(env, e1) match {
+        case TNumber => typeof(env, e2) match {
+          case TNumber => TNumber
+          case tgot => err(tgot, e2)
+        }
+        case TString => typeof(env, e2) match {
+          case TString => TString
+          case tgot => err(tgot, e2)
+        }
+        case tgot => err(tgot, e1)
+      }
+      case Binary(Minus|Times|Div, e1, e2) => typeof(env, e1) match {
+        case TNumber => typeof(env, e2) match {
+          case TNumber => TNumber
+          case tgot => err(tgot, e2)
+        }
+        case tgot => err(tgot, e1)
+      }
+      case Binary(Eq|Ne, e1, e2) => typeof(env, e1) match {
+        case t1 if !hasFunctionTyp(t1) => typeof(env, e2) match {
+          case t2 if !hasFunctionTyp(t2) && (t1 == t2) => TBool
+          case tgot => err(tgot, e2)
+        }
+        case tgot => err(tgot, e1)
+      }
+      case Binary(Lt|Le|Gt|Ge, e1, e2) => typeof(env, e1) match {
+        case TNumber => typeof(env, e2) match {
+          case TNumber => TBool
+          case tgot => err(tgot, e2)
+        }
+        case TString => typeof(env, e2) match {
+          case TString => TBool
+          case tgot => err(tgot, e2)
+        }
+        case tgot => err(tgot, e1)
+      }
+      case Binary(And|Or, e1, e2) => typeof(env, e1) match {
+        case TBool => typeof(env, e2) match {
+          case TBool => TBool
+          case tgot => err(tgot, e2)
+        }
+        case tgot => err(tgot, e1)
+      }
+      case Binary(Seq, e1, e2) => typeof(env, e1); typeof(env, e2)
+      case If(e1, e2, e3) => typeof(env, e1) match {
+        case TBool =>
+          val t1 = typeof(env, e2)
+          val t2 = typeof(env, e3)
+          if (t1 == t2) t1 else err(t2, e3)
 
-      case Obj(fields) =>
-        ???
-      case GetField(e1, f) =>
-        ???
+        case tgot => err(tgot, e1)
+      }
+
+      case Obj(fields) => TObj(fields.mapValues { ei => typeof(env, ei) })
+      case GetField(e1, f) => typeof(env, e1) match {
+        case t1 @ TObj(tfields) => tfields.get(f) match {
+          case Some(t) => t
+          case _ => err(t1, e1)
+        }
+        case tgot => err(tgot, e1)
+      }
 
         /***** Cases from Lab 4 that need a small amount of adapting. */
       case Decl(m, x, e1, e2) =>
-        ???
-      case Function(p, params, tann, e1) => {
+        //order matter?
+        val t1 = typeof(env, e1)
+        val t2 = typeof(env + (x->MTyp(m, t1)), e2)
+        if (isBindex(m, e1))
+          t2
+        else
+          err(t1, e1)
+
+      case Function(p, params, tann, e1) =>
         // Bind to env1 an environment that extends env with an appropriate binding if
         // the function is potentially recursive.
         val env1 = (p, tann) match {
           case (Some(f), Some(tret)) =>
             val tprime = TFunction(params, tret)
-            ???
+            env + (f->MTyp(MConst, tprime))
           case (None, _) => env
           case _ => err(TUndefined, e1)
         }
         // Bind to env2 an environment that extends env1 with bindings for params.
-        val env2 = ???
-        // Match on whether the return type is specified.
+        val env2 = env1 ++ params
+        // Infer the type of the function body
+        val t1 = typeof(env2, e1)
+        // Check with the possibly annotated return type
         tann match {
-          case None => ???
-          case Some(tret) => ???
+          case Some(tann) if tann != t1 => err(tann, e1)
+          case _ => ()
         }
-      }
+        TFunction(params, t1)
+
+
       case Call(e1, args) => typeof(env, e1) match {
         case TFunction(params, tret) if (params.length == args.length) =>
           (params, args).zipped.foreach {
-            ???
+            case ((xi, MTyp(mi, ti)), ei) =>
+              if (typeof(env, ei) == ti && isBindex(mi, ei)) () else err(ti, ei)
           }
           tret
         case tgot => err(tgot, e1)
       }
 
         /***** New cases for Lab 5. ***/
-      case Assign(Var(x), e1) =>
-        ???
-      case Assign(GetField(e1, f), e2) =>
-        ???
+      case Assign(Var(x), e1) => env(x) match {
+        case MTyp(MVar | MRef, _) => typeof(env, e1)
+        case MTyp(_, tgot) => err(tgot, Var(x))
+      }
+
+      case Assign(GetField(e1, f), e2) => typeof(env, e1) match {
+        case TObj(tfields) => typeof(env, e2) match {
+          case t if t == tfields(f) => t
+          case tgot => err(tgot, e2)
+        }
+      }
+
       case Assign(_, _) => err(TUndefined, e)
 
-      case Null =>
-        ???
+      case Null => TNull
 
       case Unary(Cast(t), e1) => typeof(env, e1) match {
-        case tgot if ??? => ???
+        case tgot if castOk(t, tgot) => t
         case tgot => err(tgot, e1)
       }
 

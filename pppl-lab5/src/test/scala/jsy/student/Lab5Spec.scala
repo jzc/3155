@@ -63,6 +63,15 @@ class Lab5Spec(lab5: Lab5Like) extends FlatSpec {
     }
   }
 
+  "CastOkObject" should "perform CastOKObject" in {
+    assertResult(true) {
+      castOk( TObj(Map("x"->TNumber, "y"->TString)), TObj(Map("x"->TNumber)) )
+    }
+    assertResult(true) {
+      castOk( TObj(Map("x"->TNumber)), TObj(Map("x"->TNumber, "y"->TString)) )
+    }
+  }
+
   "DoNeg" should "return the negation of a number value" in {
     val e1 = N(5)
     val e2 = Unary(Neg, e1)

@@ -36,50 +36,8 @@ val aliasingex = parse("""
   x.f = 2
   console.log(y.f)
 """)
-//iterateStep(aliasingex) // uncomment when you are ready to test your step function.
-//
-//def compress(s: List[Char]):String = {
-//  def f(s: List[Char], c: Option[Char], n: Int): String = s match {
-//    case h1 :: (t @ (h2 :: _)) => if (h1 == h2) f(t, Some(h1), n+1) else
-//  }
-//}
 
-def strToCharList(s: String): List[Char] = s.foldRight(Nil:List[Char]) { case (c, acc) => c :: acc }
+parse("1=1")
 
-def compress(s: String): String = {
-  strToCharList(s).foldLeft((None:Option[(Char,Int)],"")) {
-    case ((prev, acc), c) =>  prev match {
-      case None => (Some(c, 1), "")
-      case Some((pc, n)) =>
-        if (pc == c)
-          (Some((pc, n+1)), acc)
-        else
-          (Some((c, 1)), acc+pc+n.toString)
-    }
-  } match {
-    case (Some((pc, n)), s) => s+pc+n.toString
-  }
-}
-//
-def removeDuplicates[A](xs: List[A]):List[A] = {
-  def removeX(xs:List[A], x:A) = xs match {
-    case Nil => Nil
-    case h :: t => if (h == x) t else h :: t
-  }
-}
-
-//compress("abcdddddddddefg")
-val a = List(1,1,1,2,2,2,3,3,3)
-
-//strToCharList("aaabbc")
-
-//strToCharList("aaabbc").foldLeft((None:Option[(Char,Int)],"")) {
-//  case ((prev, acc), c) =>  prev match {
-//    case None => (Some(c, 1), "")
-//    case Some((pc, n)) =>
-//      if (pc == c)
-//        (Some((c, n+1)), acc)
-//      else
-//        (Some((c, 1)), acc+pc+n.toString)
-//  }
-//}
+val tf1 = Map("x"->MTyp(MConst, TNumber), "y"->MTyp(MConst, TString))
+val tf2 = Map("x"->MTyp(MConst, TNumber), "z"->MTyp(MConst, TString))
