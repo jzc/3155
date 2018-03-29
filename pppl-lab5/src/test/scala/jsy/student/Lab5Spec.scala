@@ -111,6 +111,15 @@ class Lab5Spec(lab5: Lab5Like) extends FlatSpec {
     assertResult(mem(A(1))) { parse("{a:1}") }
   }
 
+  "DoDecl" should "perform DoDecl" in {
+    assertResult(N(1)) {
+      step(parse("const x = 1; x"))(memempty)._2
+    }
+    val (mem, r) = step(parse("var a = 1; a"))(memempty)
+    assertResult(Unary(Deref, A(1))) { r }
+    assertResult(mem(A(1))) { N(1) }
+  }
+
   // Probably want to write some tests for castOk, typeInfer, substitute, and step.
 
 }

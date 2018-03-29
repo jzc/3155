@@ -45,7 +45,7 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
       case Binary(bop, e1, e2) => ren(env, e1) flatMap { e1p => ren(env, e2) map { e2p => Binary(bop, e1p, e2p) } }
       case If(e1, e2, e3) => ren(env, e1) flatMap { e1p => ren(env, e2) flatMap { e2p => ren(env, e3) map { e3p => If(e1p, e2p, e3p) } } }
 
-      case Var(x) => doreturn(Var(env(x)))
+      case Var(x) => doreturn(Var(env.getOrElse(x,x)))
 
       case Decl(m, x, e1, e2) => fresh(x) flatMap { xp =>
         ren(env ++ freeVars(e1).map { x => (x,x) }, e1) flatMap { e1p => ren(env + (x->xp), e2) map { e2p => Decl(m, xp, e1p, e2p)}}
@@ -333,21 +333,24 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
       case N(_) | B(_) | Undefined | S(_) | Null | A(_) => e
       case Print(e1) => Print(subst(e1))
         /***** Cases from Lab 3 */
-      case Unary(uop, e1) => ???
-      case Binary(bop, e1, e2) => ???
-      case If(e1, e2, e3) => ???
-      case Var(y) => ???
+      case Unary(uop, e1) => Unary(uop, subst(e1))
+      case Binary(bop, e1, e2) => Binary(bop, subst(e1), subst(e2))
+      case If(e1, e2, e3) => If(subst(e1), subst(e2), subst(e3))
+      case Var(y) => if (y==x) esub else e
         /***** Cases need a small adaption from Lab 3 */
       case Decl(mut, y, e1, e2) => Decl(mut, y, subst(e1), if (x == y) e2 else subst(e2))
         /***** Cases needing adapting from Lab 4 */
-      case Function(p, paramse, retty, e1) =>
-        ???
+      case Function(p, params, tann, e1) =>
+        if (params.exists { case (xi, mt) => xi == x } || p.contains(x))
+          Function(p, params, tann, e1)
+        else
+          Function(p, params, tann, subst(e1))
         /***** Cases directly from Lab 4 */
-      case Call(e1, args) => ???
-      case Obj(fields) => ???
-      case GetField(e1, f) => ???
+      case Call(e1, args) => Call(subst(e1), args map { ei => subst(ei) })
+      case Obj(fields) => Obj(fields mapValues { ei => subst(ei) })
+      case GetField(e1, f) => GetField(subst(e1), f)
         /***** New case for Lab 5 */
-      case Assign(e1, e2) => ???
+      case Assign(e1, e2) => Assign(subst(e1), subst(e2))
 
       /* Should not match: should have been removed */
       case InterfaceDecl(_, _, _) => throw new IllegalArgumentException("Gremlins: Encountered unexpected expression %s.".format(e))
@@ -356,10 +359,10 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
     def myrename(e: Expr): Expr = {
       val fvs = freeVars(esub)
       def fresh(x: String): String = if (fvs contains x) fresh(x + "$") else x
-      rename[Unit](e)(???){ x => ??? }
+      rename[Unit](e)(){ x => doreturn(fresh(x)) }
     }
 
-    subst(???)
+    subst(myrename(e))
   }
 
   /* Check whether or not an expression is reduced enough to be applied given a mode. */
@@ -371,7 +374,10 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
 
   def getBinding(mode: Mode, e: Expr): DoWith[Mem,Expr] = {
     require(!isRedex(mode,e), s"expression ${e} must not reducible under mode ${mode}")
-    ???
+    mode match {
+      case MConst | MName | MRef => doreturn(e)
+      case MVar => memalloc(e) map { a => Unary(Deref, a) }
+    }
   }
 
   /* A small-step transition. */
@@ -451,6 +457,9 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
       //SearchObject
       case GetField(e1, f) => step(e1) map { e1p => GetField(e1p, f) }
 
+
+      //DoDecl
+      case Decl(m, x, e1, e2) if !isRedex(m, e1) => getBinding(m, e1) map { e1p =>  substitute(e2, e1p, x) }
 
       /* Base Cases: Do Rules */
 //      case Print(v1) if isValue(v1) => doget map { m => println(pretty(m, v1)); Undefined }

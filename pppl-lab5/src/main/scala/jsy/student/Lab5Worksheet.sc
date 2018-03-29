@@ -42,4 +42,5 @@ val aliasingex = parse("""
 //val tf1 = Map("x"->MTyp(MConst, TNumber), "y"->MTyp(MConst, TString))
 //val tf2 = Map("x"->MTyp(MConst, TNumber), "z"->MTyp(MConst, TString))
 
-step(parse("-1"))(memempty)
+step(parse("1+1"))
+//parse("*1;")
