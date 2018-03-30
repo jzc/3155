@@ -291,6 +291,7 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
           case t if t == tfields(f) => t
           case tgot => err(tgot, e2)
         }
+        case tgot => err(tgot, e1)
       }
 
       case Assign(_, _) => err(TUndefined, e)
@@ -457,9 +458,64 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
       //SearchObject
       case GetField(e1, f) => step(e1) map { e1p => GetField(e1p, f) }
 
-
       //DoDecl
       case Decl(m, x, e1, e2) if !isRedex(m, e1) => getBinding(m, e1) map { e1p =>  substitute(e2, e1p, x) }
+
+      //SearchDecl
+      case Decl(m, x, e1, e2) => step(e1) map { e1p => Decl(m, x, e1p, e2) }
+
+      //DoDeref
+      case Unary(Deref, a:A) => doget map { mem => mem(a) }
+
+      //DoAssignVar
+      case Assign(Unary(Deref, a:A), v) if isValue(v) => domodify[Mem] { mem => mem + (a, v) } map { _ => v }
+
+      //DoAssignField
+      case Assign(GetField(a:A, f), v) if isValue(v) => domodify[Mem] { mem => mem(a) match {
+        case Obj(fields) => mem + (a, Obj(fields + (f->v)))
+        case _ => throw StuckError(e)
+      }} map { _ => v }
+
+      //SearchAssign1
+      case Assign(e1, e2) if !isLValue(e1) => step(e1) map { e1p => Assign(e1p, e2) }
+
+      //SearchAssign2
+      case Assign(lv1, e2) if isLValue(lv1) => step(e2) map { e2p => Assign(lv1, e2p) }
+
+      //DoCall/DoCallRec
+      case Call(v @ Function(p, params, _, e), args) if params.zip(args) forall { case ((_, MTyp(mi, _)), ei) => !isRedex(mi, ei) } =>
+        val ep = params.zip(args).foldRight[DoWith[Mem,Expr]] (doreturn(e)) {
+          case (((xi, MTyp(mi, _)), ei), acc) => acc flatMap { e_acc => getBinding(mi,ei) map { eip => substitute(e_acc, eip, xi) } }
+        }
+        p match {
+          case None => ep
+          case Some(x) => ep flatMap { e_acc => getBinding(MConst, v) map { epp => substitute(e_acc, epp, x) }}
+        }
+
+      //SearchCall1
+      case Call(e, args) if !isValue(e) => step(e) map { ep => Call(ep, args) }
+
+      //SearchCall2
+      case Call(f @ Function(_,params,_,_), args) => mapFirstWith[Mem, ((String, MTyp), Expr)](params.zip(args)) {
+        case (sigma @ (_, MTyp(mi, _)), ei) => if (isRedex(mi, ei)) Some(step(ei) map { eip => (sigma, eip) }) else None
+      } map { pazip => Call(f, pazip.unzip._2) }
+
+      //SearchUnary
+      case Unary(uop, e1) => step(e1) map { e1p => Unary(uop, e1p) }
+
+      //SearchBinary2
+      case Binary(bop, v1, e2) if isValue(v1) => step(e2) map { e2p => Binary(bop, v1, e2p) }
+
+      //SearchBinary1
+      case Binary(bop, e1, e2) => step(e1) map { e1p => Binary(bop, e1p, e2) }
+
+      //SearchPrint
+      case Print(e1) => step(e1) map { e1p => Print(e1p) }
+
+      //SearchIf
+      case If(e1, e2, e3) => step(e1) map { e1p => If(e1p, e2, e3) }
+
+
 
       /* Base Cases: Do Rules */
 //      case Print(v1) if isValue(v1) => doget map { m => println(pretty(m, v1)); Undefined }

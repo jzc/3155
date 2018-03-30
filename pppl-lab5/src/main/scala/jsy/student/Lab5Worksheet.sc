@@ -37,6 +37,8 @@ val aliasingex = parse("""
   console.log(y.f)
 """)
 
+parse("{1}")
+
 //parse("1=1")
 
 //val tf1 = Map("x"->MTyp(MConst, TNumber), "y"->MTyp(MConst, TString))
