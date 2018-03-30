@@ -37,7 +37,7 @@ val aliasingex = parse("""
   console.log(y.f)
 """)
 
-parse("{1}")
+parse("function (x:{a:number,b:number}) { return x.a+x.b } ")
 
 //parse("1=1")
 

@@ -281,16 +281,23 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
       }
 
         /***** New cases for Lab 5. ***/
-      case Assign(Var(x), e1) => env(x) match {
-        case MTyp(MVar | MRef, _) => typeof(env, e1)
+      case Assign(Var(x), e) => env(x) match {
+        case MTyp(MVar | MRef, t) => typeof(env, e) match {
+          case `t` => t
+          case tgot => err(tgot, e)
+        }
         case MTyp(_, tgot) => err(tgot, Var(x))
       }
 
       case Assign(GetField(e1, f), e2) => typeof(env, e1) match {
-        case TObj(tfields) => typeof(env, e2) match {
-          case t if t == tfields(f) => t
-          case tgot => err(tgot, e2)
-        }
+        case t @ TObj(tfields) =>
+          if (tfields contains f)
+            typeof(env, e2) match {
+              case t if t == tfields(f) => t
+              case tgot => err(tgot, e2)
+            }
+          else
+            err(t, e1)
         case tgot => err(tgot, e1)
       }
 
@@ -299,7 +306,7 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
       case Null => TNull
 
       case Unary(Cast(t), e1) => typeof(env, e1) match {
-        case tgot if castOk(t, tgot) => t
+        case tgot if castOk(tgot, t) => t
         case tgot => err(tgot, e1)
       }
 
@@ -455,7 +462,10 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
         case _ => throw StuckError(e)
       }
 
-      //SearchObject
+      //NullErrorGetField
+      case GetField(Null, _) => throw NullDereferenceError(e)
+
+      //SearchGetField
       case GetField(e1, f) => step(e1) map { e1p => GetField(e1p, f) }
 
       //DoDecl
@@ -499,6 +509,28 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
       case Call(f @ Function(_,params,_,_), args) => mapFirstWith[Mem, ((String, MTyp), Expr)](params.zip(args)) {
         case (sigma @ (_, MTyp(mi, _)), ei) => if (isRedex(mi, ei)) Some(step(ei) map { eip => (sigma, eip) }) else None
       } map { pazip => Call(f, pazip.unzip._2) }
+
+      //DoCastNull
+      case Unary(Cast(t), Null) => doreturn(Null)
+
+      //DoCastObj/TypeErrorCastObj
+      case Unary(Cast(TObj(tfields)), a:A) => doget map {
+        mem => mem(a) match {
+          case Obj(fields) =>
+            if (tfields forall { case (fi, _) => fields contains fi })
+              a
+            else
+              throw DynamicTypeError(e)
+          case _ => throw StuckError(e)
+        }
+      }
+
+      //NullErrorAssignField
+      case Assign(GetField(Null, _), _) => throw NullDereferenceError(e)
+
+      //DoCast
+      case Unary(Cast(t), v) if !v.isInstanceOf[A] => doreturn(v)
+
 
       //SearchUnary
       case Unary(uop, e1) => step(e1) map { e1p => Unary(uop, e1p) }

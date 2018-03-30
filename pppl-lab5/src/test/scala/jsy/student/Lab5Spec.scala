@@ -57,6 +57,10 @@ class Lab5Spec(lab5: Lab5Like) extends FlatSpec {
 
   /* Tests based on rules */
 
+  "CastOkEq" should "perform CastOkEq" in {
+    assert(castOk(TNumber, TNumber))
+  }
+
   "CastOkNull" should "perform CastOkNull" in {
     assertResult(true) {
       castOk(TNull, TObj(Map.empty))
@@ -70,6 +74,8 @@ class Lab5Spec(lab5: Lab5Like) extends FlatSpec {
     assertResult(true) {
       castOk( TObj(Map("x"->TNumber)), TObj(Map("x"->TNumber, "y"->TString)) )
     }
+    assert(!castOk(TObj(Map("x"->TNumber, "y"->TString)), TObj(Map("x"->TNumber, "z"->TString))))
+    assert(!castOk( TObj(Map("x"->TNumber, "y"->TString)), TObj(Map("x"->TString)) ))
   }
 
   val params = List(
@@ -444,15 +450,6 @@ class Lab5Spec(lab5: Lab5Like) extends FlatSpec {
       }
     }
 
-    "TypeDecl" should "perform TypeDecl" in {
-      assertResult(TNumber) {
-        typeof(empty, Decl(MConst, "x", N(1), Var("x")))
-      }
-      assertResult(TString) {
-        typeof(empty, Decl(MConst, "x", N(1), S("hello")))
-      }
-    }
-
     val obj = Obj(Map(
       ("a", Binary(Plus, N(1), N(2))),
       ("b", Binary(Eq, N(1), N(2))),
@@ -519,37 +516,7 @@ class Lab5Spec(lab5: Lab5Like) extends FlatSpec {
       }
     }
 
-    {
-      val f = Function(
-        None,
-        List(("x", MTyp(MConst, TNumber)), ("y", MTyp(MConst, TNumber)), ("z", MTyp(MConst, TNumber))),
-        None,
-        Binary(Plus, Binary(Plus, Var("x"), Var("y")), Var("z"))
-      )
-      "TypeCall" should "should throw ste if incorrect number of params" in {
-        intercept[StaticTypeError] {
-          typeof(empty, Call(f, Nil))
-        }
-      }
 
-      it should "throw ste if param types dont match" in {
-        intercept[StaticTypeError] {
-          typeof(empty, Call(f, List(N(1), S("2"), N(3))))
-        }
-        intercept[StaticTypeError] {
-          typeof(empty, Call(f, List(S("1"), N(2), N(3))))
-        }
-        intercept[StaticTypeError] {
-          typeof(empty, Call(f, List(N(1), N(2), S("3"))))
-        }
-      }
-
-      it should "perform TypeCall" in {
-        assertResult(TNumber) {
-          typeof(empty, Call(f, List(N(1), N(2), N(3))))
-        }
-      }
-    }
 
 
     "TypeObject" should "perform TypeObject" in {
@@ -662,6 +629,119 @@ class Lab5Spec(lab5: Lab5Like) extends FlatSpec {
       step(parse("((x:number, y:number, z:number)=>5)(1+1,2+2,3+3)"))(memempty)._2
     }
   }
+
+  "TypeNull" should "perform TypeNull" in { assertResult(TNull) { typeof(empty, Null) } }
+
+  "TypeAssignVar" should "perform TypeAssignVar" in {
+    assertResult(TNumber) {
+      typeof(Map("x"->MTyp(MVar, TNumber)), parse("x=5"))
+    }
+    assertResult(TNumber) {
+      typeof(Map("x"->MTyp(MRef, TNumber)), parse("x=5"))
+    }
+    intercept[StaticTypeError] {
+      typeof(Map("x"->MTyp(MConst, TNumber)), parse("x=5"))
+    }
+    intercept[StaticTypeError] {
+      typeof(Map("x"->MTyp(MVar, TBool)), parse("x=5"))
+    }
+    intercept[StaticTypeError] {
+      typeof(Map("x"->MTyp(MName, TBool)), parse("x=5"))
+    }
+    intercept[StaticTypeError] {
+      typeof(Map("x"->MTyp(MName, TNumber)), parse("x=false"))
+    }
+  }
+
+  "TypeAssignField" should "perform TypeAssignField" in {
+    assertResult(TNumber) {
+      typeof(empty, parse("{a:1}.a = 2"))
+    }
+    intercept[StaticTypeError] {
+      typeof(empty, parse("{b:1}.a = 2"))
+    }
+    intercept[StaticTypeError] {
+      typeof(empty, parse("{a:false}.a = 2"))
+    }
+    intercept[StaticTypeError] {
+      typeof(empty, parse("{a:1}.a = false"))
+    }
+  }
+
+  "isBindex" should "perform isBindex" in {
+    assert(isBindex(MConst, N(1)))
+    assert(isBindex(MName, N(1)))
+    assert(isBindex(MVar, N(1)))
+    assert(isBindex(MRef, Var("x")))
+    assert(isBindex(MRef, parse("{a:1}.a")))
+    assert(!isBindex(MRef, N(1)))
+  }
+
+  "TypeDecl" should "perform TypeDecl" in {
+    assertResult(TBool) {
+      typeof(empty, parse("const x = 1; x < 2"))
+    }
+    assertResult(TNumber) {
+      typeof(empty, parse("name x = 1; x+x"))
+    }
+    assertResult(TNumber) {
+      typeof(empty, parse("var y = 1; ref x = y; x"))
+    }
+    assertResult(TNumber) {
+      typeof(empty, parse("ref a = {a:1}.a; a"))
+    }
+    assertResult(TString) {
+      typeof(empty, parse("var x = 'hello'; x+' world'"))
+    }
+    intercept[StaticTypeError] {
+      typeof(empty, parse("ref x = 1; x"))
+    }
+    intercept[StaticTypeError] {
+      typeof(empty, parse("var y = 1; ref x = y+1; x"))
+    }
+  }
+
+  "TypeCall" should "perform TypeCall" in {
+    assertResult(TBool) {
+      typeof(empty, parse("function (x: number, y:number) { return x < y }(5,6)"))
+    }
+    assertResult(TBool) {
+      typeof(empty, parse("function (x: ref number, y:number) { return x < y }({a:5}.a,6)"))
+    }
+    intercept[StaticTypeError] {
+      typeof(empty, parse("function (x: number, y:number) { return x < y }(5)"))
+    }
+    intercept[StaticTypeError] {
+      typeof(empty, parse("function (x: number, y:number) { return x < y }(5, false)"))
+    }
+    intercept[StaticTypeError] {
+      typeof(empty, parse("function (x: ref number, y:number) { return x < y }(5, 6)"))
+    }
+  }
+
+  "TypeCast" should "perform TypeCast" in {
+    assertResult(TObj(Map())) {
+      typeof(empty, parse("<{}>{a:1}"))
+    }
+    assertResult(TObj(Map("a"->TNumber))) {
+      typeof(empty, parse("<{a:number}>{a:1,b:2}"))
+    }
+    assertResult(TObj(Map("a"->TNumber, "b"->TNumber))) {
+      typeof(empty, parse("<{a:number; b:number}>{a:1}"))
+    }
+    assertResult(TObj(Map("a"->TNumber))) {
+      typeof(empty, parse("<{a:number}> null"))
+    }
+    intercept[StaticTypeError] {
+      typeof(empty, parse("<number>false"))
+    }
+    intercept[StaticTypeError] {
+      typeof(empty, parse("<{a:number}>1"))
+    }
+  }
+
+
+
 
 
   // Probably want to write some tests for castOk, typeInfer, substitute, and step.
