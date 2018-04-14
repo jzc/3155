@@ -9,9 +9,9 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
 
   /*
    * CSCI 3155: Lab 5
-   * <Your Name>
+   * Justin Cai
    *
-   * Partner: <Your Partner's Name>
+   * Partner: Jarrod Raine
    * Collaborators: <Any Collaborators>
    */
 
@@ -47,10 +47,17 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
 
       case Var(x) => doreturn(Var(env.getOrElse(x,x)))
 
-      case Decl(m, x, e1, e2) => fresh(x) flatMap { xp =>
-        ren(env ++ freeVars(e1).map { x => (x,x) }, e1) flatMap { e1p => ren(env + (x->xp), e2) map { e2p => Decl(m, xp, e1p, e2p)}}
-//        ren(env, e1) flatMap { e1p => ren(env + (x->xp), e2) map { e2p => Decl(m, xp, e1p, e2p) } }
-//        ren(env + (x->xp), e2) flatMap { e2p => doreturn(Decl(m, xp, e1, e2p)) }
+//      case Decl(m, x, e1, e2) => fresh(x) flatMap { xp =>
+//        ren(env ++ freeVars(e1).map { x => (x,x) }, e1) flatMap { e1p => ren(env + (x->xp), e2) map { e2p => Decl(m, xp, e1p, e2p)}}
+////        ren(env, e1) flatMap { e1p => ren(env + (x->xp), e2) map { e2p => Decl(m, xp, e1p, e2p) } }
+////        ren(env + (x->xp), e2) flatMap { e2p => doreturn(Decl(m, xp, e1, e2p)) }
+//      }
+      case Decl(m, x, e1, e2) => fresh(x) flatMap {
+        xp => ren(env, e1) flatMap {
+          e1p => ren(extend(env, x, xp), e2) map {
+            e2p => Decl(m, xp, e1p, e2p)
+          }
+        }
       }
       case Function(p, params, retty, e1) => {
         val w: DoWith[W,(Option[String], Map[String,String])] = p match {
@@ -265,9 +272,8 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
         // Check with the possibly annotated return type
         tann match {
           case Some(tann) if tann != t1 => err(tann, e1)
-          case _ => ()
+          case _ => TFunction(params, t1)
         }
-        TFunction(params, t1)
 
 
       case Call(e1, args) => typeof(env, e1) match {
@@ -531,7 +537,6 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
       //DoCast
       case Unary(Cast(t), v) if !v.isInstanceOf[A] => doreturn(v)
 
-
       //SearchUnary
       case Unary(uop, e1) => step(e1) map { e1p => Unary(uop, e1p) }
 
@@ -546,82 +551,6 @@ object Lab5 extends jsy.util.JsyApplication with Lab5Like {
 
       //SearchIf
       case If(e1, e2, e3) => step(e1) map { e1p => If(e1p, e2, e3) }
-
-
-
-      /* Base Cases: Do Rules */
-//      case Print(v1) if isValue(v1) => doget map { m => println(pretty(m, v1)); Undefined }
-//        /***** Cases needing adapting from Lab 3. */
-//      case Unary(Neg, N(n1)) => doreturn(N(-n1)) //if isValue(v1) => doreturn(-v1)
-//        /***** More cases here */
-//        /***** Cases needing adapting from Lab 4. */
-//      case Obj(fields) if (fields forall { case (_, vi) => isValue(vi)}) =>
-//        ???
-//      case GetField(a @ A(_), f) =>
-//        ???
-//
-//      case Decl(MConst, x, v1, e2) if isValue(v1) =>
-//        ???
-//      case Decl(MVar, x, v1, e2) if isValue(v1) =>
-//        ???
-//
-//        /***** New cases for Lab 5. */
-//      case Unary(Deref, a @ A(_)) =>
-//        ???
-//
-//      case Assign(Unary(Deref, a @ A(_)), v) if isValue(v) =>
-//        domodify[Mem] { m => ??? } map { _ => ??? }
-//
-//      case Assign(GetField(a @ A(_), f), v) if isValue(v) =>
-//        ???
-//
-//      case Call(v @ Function(p, params, _, e), args) => {
-//        val pazip = params zip args
-//        if (???) {
-//          val dwep = pazip.foldRight( ??? : DoWith[Mem,Expr] )  {
-//            case (((xi, MTyp(mi, _)), ei), dwacc) => ???
-//          }
-//          p match {
-//            case None => ???
-//            case Some(x) => ???
-//          }
-//        }
-//        else {
-//          val dwpazipp = mapFirstWith(pazip) {
-//            ???
-//          }
-//          ???
-//        }
-//      }
-//
-//      /* Base Cases: Error Rules */
-//        /***** Replace the following case with a case to throw NullDeferenceError.  */
-//      //case _ => throw NullDeferenceError(e)
-//
-//      /* Inductive Cases: Search Rules */
-//        /***** Cases needing adapting from Lab 3. Make sure to replace the case _ => ???. */
-//      case Print(e1) => step(e1) map { e1p => Print(e1p) }
-//      case Unary(uop, e1) =>
-//        ???
-//        /***** Cases needing adapting from Lab 4 */
-//      case GetField(e1, f) =>
-//        ???
-//      case Obj(fields) =>
-//        ???
-//
-//      case Decl(mode, x, e1, e2) =>
-//        ???
-//      case Call(e1, args) =>
-//        ???
-//
-//        /***** New cases for Lab 5.  */
-//      case Assign(e1, e2) if ??? =>
-//        ???
-//      case Assign(e1, e2) =>
-//        ???
-//
-//      /* Everything else is a stuck error. */
-//      case _ => throw StuckError(e)
     }
   }
 

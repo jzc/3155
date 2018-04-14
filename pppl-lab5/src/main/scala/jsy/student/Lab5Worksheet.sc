@@ -37,12 +37,6 @@ val aliasingex = parse("""
   console.log(y.f)
 """)
 
-parse("function (x:{a:number,b:number}) { return x.a+x.b } ")
-
-//parse("1=1")
-
-//val tf1 = Map("x"->MTyp(MConst, TNumber), "y"->MTyp(MConst, TString))
-//val tf2 = Map("x"->MTyp(MConst, TNumber), "z"->MTyp(MConst, TString))
-
-step(parse("1+1"))
-//parse("*1;")
+//parse("function (x:{a:number,b:number}) { return x.a+x.b } ")
+parse("interface T {x:number;y:number}; (a:T, b:T)o")
+//step(parse("1+1"))
