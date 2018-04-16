@@ -128,7 +128,6 @@ class Lab6Spec(lab6: Lab6Like) extends FlatSpec {
       }
     }
   }
-  
 }
 
 // An adapter class to pass in your lab object.

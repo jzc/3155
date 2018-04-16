@@ -12,6 +12,15 @@ import jsy.lab6._
 // Imports all of the functions from your implementation
 import jsy.student.Lab6._
 
+"".toList== Nil
+
+def factorial(n: Int)(sc: Int => Int):Int = {
+  if (n==1) sc(n) else factorial(n-1){ np => factorial() }
+}
+
+factorial(6) { n => n }
+
+
 // Experiment with the warm-up exercises
 //val l1 = List(1, 2, 3, 4, 5, 6)
 //val t1 = treeFromList(l1)
