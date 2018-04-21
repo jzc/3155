@@ -128,6 +128,29 @@ class Lab6Spec(lab6: Lab6Like) extends FlatSpec {
       }
     }
   }
+
+  "RStar" should "work" in {
+    assert(retest(RStar(RSingle('a')), "a"))
+    assert(retest(RStar(RSingle('a')), "aa"))
+    assert(retest(RStar(RConcat(RSingle('a'),RSingle('b'))), "ab"))
+    assert(!retest(RStar(RConcat(RSingle('a'),RSingle('b'))), "aba"))
+    assert(retest(RStar(RConcat(RSingle('a'),RSingle('b'))), "abab"))
+    assert(
+      retest(
+        RStar(RConcat(RStar(RSingle('a')), RSingle('b'))),
+        "abaabaaabaaaab"
+      )
+    )
+  }
+
+  "RIntersect" should "work " in {
+    assert(retest(RIntersect(RSingle('a'), RStar(RSingle('a'))), "a"))
+  }
+
+  "RNeg" should " work " in {
+    assert(retest(RNeg(RSingle('a')), "b"))
+  }
+
 }
 
 // An adapter class to pass in your lab object.
