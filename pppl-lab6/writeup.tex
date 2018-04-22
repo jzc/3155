@@ -1,0 +1,120 @@
+\documentclass[11pt, letter]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{ mathrsfs }
+\title{Lab 6 Writeup}
+\author{Justin Cai}
+
+\begin{document}
+    \maketitle
+
+    \section{Regular Expression Parser: Recursive Descent Parsing}
+    \begin{itemize}
+        \item [i.] \textit{In your write-up, give a refactored version of the re grammar from Fig-
+        ure 1 that eliminates ambiguity in BNF (not EBNF).}
+        \begin{align*}
+            re &::= union\\
+            union &::= intersect \, | \, union \, ``|" \, intersect \\
+            intersect &::= concat \, | \, intersect \, ``\&" \, concat \\
+            concat &::= not \, | \, concat \, not \\
+            not &::= star \, | \, ``\sim" \, not \\
+            star &::= atom \, | \, star \, (``*" \, | \, ``+" \, | ``?") \\
+            atom &::= c \, | \, ! \, | \, \# \, | \, . \, | \, ``(" \, re \, ``)"
+        \end{align*}
+        \item [ii.] \textit{Explain briefly why a recursive descent parser following your grammar
+        with left recursion would go into an infinite loop.}
+        Consider the simpler grammar of expressions:
+        \begin{align*}
+            e ::= n \mid e + n
+        \end{align*}
+        where $n$ are numbers. To parse the string ``1+2,'' we would check to see if the string
+        matches $n$, which it does not, so then it would check to see if the string matches $e+n$, 
+        which involves checking to see the string matches an $e$, then $+$, and $n$. The problem is 
+        that the we initally see if the string matches an $e$, this invokes another recursive check to 
+        match an $e$, an it will infinitely recurse.
+        \item [iii.] \textit{In your write-up, give a refactored version of the re grammar that re-
+        places left-associative binary operators with n-ary versions using EBNF.}
+        \begin{align*}
+            re &::= union\\
+            union &::= intersect \, \{ ``|" \, intersect \} \\
+            intersect &::= concat \, \{ ``\&" \, concat \}\\
+            concat &::= not \, \{not\}\\
+            not &::= star \, | \, ``\sim" \, not \\
+            star &::= atom \, \{ ``*" \, | \, ``+" \, | ``?" \} \\
+            atom &::= c \, | \, ! \, | \, \# \, | \, . \, | \, ``(" \, re \, ``)"
+        \end{align*}
+        \item [iv.]\textit{In your write-up, give the full refactored grammar in BNF without left
+        recursion and new non-terminals like unions for lists of symbols.}
+        \begin{align*}
+            re &::= union\\
+            union &::= intersect \, unions \\
+            unions &::= \epsilon \, | \,  ``|" \, intersect \, unions\\
+            intersect &::= concat \, intersects\\
+            intersects &::= \epsilon \, | \, ``\&" \, concat \, intersects\\
+            concat &::= not \, concats \\
+            concats &::= \epsilon \, | \, not \, concats \\
+            not &::= star \, | \, ``\sim" \, not \\
+            star &::= atom \, stars \\
+            stars &::= \epsilon \, | \, (`*" \, | \, ``+" \, | \, ``?") \, stars \\
+            atom &::= c \, | \, ! \, | \, \# \, | \, . \, | \, ``(" \, re \, ``)"
+        \end{align*}
+    \end{itemize}
+
+    \section{Regular Expression Literals in JavaScripty}
+    \begin{itemize}
+        \item [i.] \textit{In your write-up, give typing and small-step operational semantic rules
+        for regular expression literals and regular expression tests based on the informal
+        specification given above. Clearly and concisely explain how your rules enforce
+        the constraints given above and any additional decisions you made.}
+
+        Typing rules:
+        \begin{align*}
+            \textsc{TypeRe} &: \frac{re \in \mathscr{L}(re)}{\textit{/\^{}re\$/} : \textbf{RegExp}}\\\\
+            \textsc{TypeReTest} &: \frac{\Gamma \vdash e_1 : \textbf{RegExp} \qquad \Gamma \vdash e_2 : \textbf{string}}{e_1.test(e_2) : \textbf{bool}}
+        \end{align*}
+        \textsc{TypeRe} adds typing for a regular expression literal, with the previous judgement that the
+        $re$ is a valid regular expression. \textsc{TypeReTest} says that the expression $e_1.test(e_2)$ has 
+        a type of bool, given that $e_1$ is a regular expression and $e_2$ is a string.
+
+        Small-step operational semantics:
+        \begin{align*}
+            \textsc{SearchReTest} &: \frac{e_2 \to e_2'}{\textit{/\^{}re\$/}.test(e_2) \to \textit{/\^{}re\$/}.test(e_2')}\\\\
+            \textsc{DoReTest} &: \frac{b' = retest(\textit{/\^{}re\$/}, s)}{\textit{/\^{}re\$/}.test(s) \to b'}
+        \end{align*}
+        \textsc{SearchCall} will step $e_1$ in $e_1(e_2)$ to $\textit{/\^{}re\$/}.test$ (or \texttt{Call(GetField($e_1$,"test"), List($e_2$))}
+        as an AST node). In order for the interpreter to step this, these two rules need to be implemented.
+        If $e_2$ is not fully stepped to a string, then \textsc{SearchReTest} will step $e_2$. Once $e_2$
+        is stepped to a string, then \textsc{DoReTest} will perform the test by calling the \texttt{retest} 
+        function.
+    \end{itemize}
+    % \section{Scala Basics: Binding and Scope}
+    % \begin{itemize}
+    %     \item [a.] The use of \texttt{pi} on line 4 is bound at line 3.
+    %     The scope in which that use of \texttt{pi} has a definition within that scope, so 
+    %     that binding is used. The use of \texttt{pi} on line 7 is bound at line 1. The 
+    %     \texttt{area} function does not create a new scope, and the scope in which \texttt{area}
+    %     is defined has a definition of \texttt{pi} on line 1, so that one is used.
+    %     \item [b.] The use of \texttt{x} on line 3 is bound at line 2. The function parameters of \texttt{f} 
+    %     are the innermost definition of \texttt{x}, so that binding is used.
+    %     The use of \texttt{x} on line 6 is bound on line 5. \texttt{x} is not bound in that scope, so we use
+    %     the binding of \texttt{x} provided by the \texttt{case} statement.
+    %     The use of \texttt{x} on line 10 is bound on line 5. This is the same as the use on line 6.
+    %     The use of \texttt{x} on line 13 is bound on line 1. This is the outermost scope, so there are
+    %     no bindings to shadow and there is a binding provided on line 1, so that one is used.
+    % \end{itemize}
+
+    % \section{Scala Basics: Typing}
+    % The body of \texttt{g} is well-typed, and returns a \texttt{((Int, Int), Int)}. 
+    
+    % \texttt{if (x==0) (b, 1) else (b, a+2): ((Int, Int), Int)} because\\
+    % \texttt{(b, 1): ((Int, Int), Int)} \\
+    % \texttt{(b, a+2): ((Int, Int), Int)} \\
+    % \texttt{x: Int}\\
+    % \texttt{3: Int}\\
+    % \texttt{(x, 3): (Int, Int)} \\
+    % \texttt{b: (Int, Int)} \\
+    % \texttt{1: Int} \\
+    % \texttt{a: Int} \\
+    % \texttt{2: Int} \\
+    % \texttt{a+2: Int}
+\end{document}
