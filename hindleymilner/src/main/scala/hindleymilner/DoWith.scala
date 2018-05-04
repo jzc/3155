@@ -29,5 +29,10 @@ object DoWith {
   def doput[W](w: W): DoWith[W, Unit] = new DoWith[W, Unit]({ _ => (w, ()) })
   def doreturn[W, R](r: R): DoWith[W, R] = new DoWith[W, R]({ w => (w, r) })  // doget map { _ => r }
   def domodify[W](f: W => W): DoWith[W, Unit] = new DoWith[W, Unit]({ w => (f(w), ()) })  // doget flatMap { w => doput(f(w)) }
+  def mapWith[W,A,B](l: List[A])(f: A => DoWith[W,B]): DoWith[W,List[B]] = {
+    l.foldRight[DoWith[W,List[B]]]( doreturn(Nil) ) {
+      case (a, dwb) => f(a) flatMap { ap => dwb flatMap { dwbp => doreturn(ap :: dwbp) }} //dwb.flatMap { bs => f(a)}
+    }
+  }
 }
 

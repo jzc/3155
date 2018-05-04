@@ -15,7 +15,7 @@ object HindleyMilnerSpec {
               App(Var("g"), Var("x"))
             )))),
       Var("compose"))
-    val t = inferType(compose)
-    println(t)
+    println(displayType(inferType(id)))
+    println(displayType(inferType(compose)))
   }
 }
