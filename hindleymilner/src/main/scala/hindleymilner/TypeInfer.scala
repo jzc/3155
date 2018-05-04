@@ -70,6 +70,13 @@ object TypeInfer {
   def inferType(e: Expr): Type = {
     val p = infer(empty, e) map { case (s, t) => apply(s, t) }
     val (_, t) = p('a')
-    t
+    def getTVars(t: Type): Set[String] = t match {
+      case TVar(x) => Set(x)
+      case TFun(t1, t2) => getTVars(t1) ++ getTVars(t2)
+    }
+    val vars = getTVars(t).toList.sorted
+    val (_, newVars) = mapWith(vars) { _ => fresh }('a')
+    val alphabetize = Subst(vars.zip(newVars).toMap)
+    apply(alphabetize, t)
   }
 }

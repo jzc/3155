@@ -6,9 +6,7 @@ import hindleymilner.DoWith._
 import hindleymilner.TypeInfer._
 import hindleymilner.ast._
 
-val id = Let("x", Abs("x", Var("x")), Var("x"))
-
-infer(empty, id)
+List(1,2,3).zip(mapWith(List(1,2,3)) { _ => fresh }('a')._2).toMap
 
 
 //def next(s: String): String = s.toList match {
